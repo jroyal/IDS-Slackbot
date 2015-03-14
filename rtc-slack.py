@@ -42,4 +42,4 @@ def test2(env):
 
 if __name__ == '__main__':
     env = yaml.load(file("env.yaml"))
-    test(env)
+    test2(env)

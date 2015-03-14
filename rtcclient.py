@@ -1,6 +1,7 @@
 __author__ = 'jhroyal'
 import requests
 import json
+import xmltodict
 
 
 class RTCWorkItem():
@@ -51,7 +52,8 @@ class RTCClient(object):
         self.base_url = env["JAZZ_URL"]
         self.jazz_user = env["JAZZ_USERNAME"]
         self.jazz_pass = env["JAZZ_PASSWORD"]
-        self.projectarea = env["PROJECT_AREA"]
+        self.project = env["PROJECT"]
+        self.project_uuid = None
         auth_uri = "/authenticated/identity"
         self.session = requests.Session()
         self.session.verify = False
@@ -84,16 +86,31 @@ class RTCClient(object):
             print response.headers
             print response.text
 
+    def _find_project_uuid(self):
+        uuid = None
+        url = "/process/project-areas"
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        response = self.session.get(self.base_url + url, verify=False, headers=headers)
+        projects = xmltodict.parse(response.text)["jp06:project-areas"]["jp06:project-area"]
+        for project in projects:
+            if self.project in project["@jp06:name"]:
+                uuid = project["jp06:url"][project["jp06:url"].rfind("/") + 1:]
+                print uuid
+        return uuid
+
+
     def get_work_item(self, itemNumber):
-        old_url = "/oslc/workitems/%s.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type" % itemNumber
-        response = self.session.get(self.base_url + old_url, verify=False)
+        url = "/oslc/workitems/%s.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type" % itemNumber
+        response = self.session.get(self.base_url + url, verify=False)
         print response.headers
         print json.dumps(json.loads(response.text), indent=4, sort_keys=True)
         return RTCWorkItem(json.loads(response.text))
 
 
     def get_filtered_results(self):
-        url = "/oslc/contexts/%s/workitems.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type" % self.projectarea
+        if self.project_uuid is None:
+            self.project_uuid = self._find_project_uuid()
+        url = "/oslc/contexts/%s/workitems.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type" % self.project_uuid
         response = self.session.get(self.base_url + url, verify=False)
         print response.headers
         print json.dumps(json.loads(response.text), indent=4, sort_keys=True)
