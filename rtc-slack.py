@@ -111,7 +111,8 @@ def run():
             for workitem in workitems:
                 if has_status_changed(workitem):
                     slack_outbound.append(workitem)
-            send_message_to_slack(env["SLACK_URL"], channel, slack_outbound)
+            if len(slack_outbound) > 0:
+                send_message_to_slack(env["SLACK_URL"], channel, slack_outbound)
 
         time.sleep(env["POLLING_INTERVAL"])
 
