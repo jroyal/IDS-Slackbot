@@ -9,7 +9,10 @@ class RTCWorkItem():
         self.summary = obj_json["dc:title"]
         self.id = obj_json["dc:identifier"]
         type_string = obj_json["dc:type"]["rdf:resource"]
-        self.type = type_string[type_string.rfind("/") + 1:].title()
+        if "task" in type_string:
+            self.type = "Task"
+        elif "Story":
+            self.type = "Story"
         self.state = self.get_state(obj_json["rtc_cm:state"]["rdf:resource"])
         self.url = obj_json["rdf:resource"]
 
@@ -48,11 +51,11 @@ class RTCWorkItem():
 
 
 class RTCClient(object):
-    def __init__(self, env):
-        self.base_url = env["JAZZ_URL"]
-        self.jazz_user = env["JAZZ_USERNAME"]
-        self.jazz_pass = env["JAZZ_PASSWORD"]
-        self.project = env["PROJECT"]
+    def __init__(self, url, user, password, project):
+        self.base_url = url
+        self.jazz_user = user
+        self.jazz_pass = password
+        self.project = project
         self.project_uuid = None
         auth_uri = "/authenticated/identity"
         self.session = requests.Session()
@@ -79,14 +82,15 @@ class RTCClient(object):
                 print "Failed to authenticate"
                 print login_response.status_code
                 print login_response.text
-                raise Exception( "Failed to login: ", login_response.text )
+                raise Exception("Failed to login: ", login_response.text)
 
             print "Getting authenticated resource again now that we should be logged in:"
-            response = self.session.get(self.base_url + auth_uri )
+            response = self.session.get(self.base_url + auth_uri)
             print response.headers
             print response.text
 
     def _find_project_uuid(self):
+        print "Getting project uuid"
         uuid = None
         url = "/process/project-areas"
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -95,22 +99,25 @@ class RTCClient(object):
         for project in projects:
             if self.project in project["@jp06:name"]:
                 uuid = project["jp06:url"][project["jp06:url"].rfind("/") + 1:]
-                print uuid
         return uuid
 
 
     def get_work_item(self, itemNumber):
         url = "/oslc/workitems/%s.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type" % itemNumber
         response = self.session.get(self.base_url + url, verify=False)
-        print response.headers
         print json.dumps(json.loads(response.text), indent=4, sort_keys=True)
         return RTCWorkItem(json.loads(response.text))
 
 
-    def get_filtered_results(self):
+    def get_squad_workitems(self):
+        print "Getting squad workitems"
+        workitems = []
         if self.project_uuid is None:
             self.project_uuid = self._find_project_uuid()
         url = "/oslc/contexts/%s/workitems.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type" % self.project_uuid
         response = self.session.get(self.base_url + url, verify=False)
-        print response.headers
-        print json.dumps(json.loads(response.text), indent=4, sort_keys=True)
+        unparsed_json = json.loads(response.text)
+        # print json.dumps(json.loads(response.text), indent=4, sort_keys=True)
+        for workitem in unparsed_json["oslc_cm:results"]:
+            workitems.append(RTCWorkItem(workitem))
+        return workitems

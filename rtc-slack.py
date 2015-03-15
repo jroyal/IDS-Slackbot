@@ -4,10 +4,13 @@ from rtcclient import RTCClient
 import requests
 import json
 import yaml
+import sqlite3
+import time
 
 
-def send_message_to_slack(url, workitem):
+def send_message_to_slack(url, channel, workitem):
     payload = {
+        "channel": channel,
         "attachments": [
             {
                 "fallback": "<%s|%s %s> has been updated!" % (workitem.url, workitem.type, workitem.id),
@@ -23,23 +26,53 @@ def send_message_to_slack(url, workitem):
             }
         ]
     }
+    print "sending a message to slack"
     requests.post(url, data=json.dumps(payload))
 
 
-def load_env(self):
-    pass
+def has_status_changed(workitem):
+    workitem_has_changed = False
+    conn = sqlite3.connect("rtcworkitem.db")
+    db = conn.cursor()
+    db.execute("CREATE TABLE IF NOT EXISTS workitems (id INTEGER PRIMARY KEY , state TEXT)")
+    db.execute("SELECT * FROM workitems WHERE id=?", (workitem.id,))
+    db_line = db.fetchone()
+    if db_line:
+        if db_line[1] != workitem.state:
+            print "Workitem %s has changed." % workitem.id
+            db.execute("UPDATE workitems SET state=? WHERE id=?", (workitem.state, workitem.id))
+            workitem_has_changed = True
+        else:
+            workitem_has_changed = False
+    else:
+        print "Adding workitem %s to the db" % workitem.id
+        db.execute("INSERT INTO workitems VALUES (?, ?)", (workitem.id, workitem.state))
+        workitem_has_changed = True
+
+    conn.commit()
+    conn.close
+    return workitem_has_changed
 
 
-def test(env):
-    rtc = RTCClient(env)
-    workitem = rtc.get_work_item(43746)
-    send_message_to_slack(env["SLACK_URL"], workitem)
+def run():
+    env = yaml.load(file("env.yaml"))
+    squad_list = []
+    for squad in env["SQUAD_LIST"]:
+        rtc = RTCClient(env["JAZZ_URL"],
+                        env["JAZZ_USERNAME"],
+                        env["JAZZ_PASSWORD"],
+                        squad["squad"])
+        squad_list.append((rtc, squad["channel"]))
 
+    while True:
+        for rtc, channel in squad_list:
+            workitems = rtc.get_squad_workitems()
+            for workitem in workitems:
+                if has_status_changed(workitem):
+                    send_message_to_slack(env["SLACK_URL"], channel, workitem)
 
-def test2(env):
-    rtc = RTCClient(env)
-    rtc.get_filtered_results()
+        time.sleep(env["POLLING_INTERVAL"])
+
 
 if __name__ == '__main__':
-    env = yaml.load(file("env.yaml"))
-    test2(env)
+    run()

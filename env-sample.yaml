@@ -1,5 +1,10 @@
-JAZZ_USERNAME: user
-JAZZ_PASSWORD: pass
-JAZZ_URL: https://hub.jazz.net/ccmXX
-PROJECT: Alchemy-OS-Innovation-A
-SLACK_URL: "https://hooks.slack.com/services...."
+JAZZ_USERNAME: user                                 # A Jazz username used to login to the REST API
+JAZZ_PASSWORD: pass                                 # A Jazz password used to login to the REST API
+JAZZ_URL: https://hub.jazz.net/ccmXX                # The URL needed for the REST API. Must set the last two digits.
+SLACK_URL: "https://hooks.slack.com/services...."   # The URL given to you by your incoming web hook slack bot.
+POLLING_INTERVAL: 60                                # The polling interval that we check for updates on.
+SQUAD_LIST:
+  - squad: Sample Project A                         # The name in the filed against field
+    channel: #spA                                   # The channel you would want updates pushed to for that squad.
+  - squad: Sample Project B
+    channel: #random
