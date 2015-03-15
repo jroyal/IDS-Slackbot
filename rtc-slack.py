@@ -10,7 +10,7 @@ import logging as log
 import sys
 
 
-def send_message_to_slack(url, channel, workitem):
+def send_message_to_slack(url, channel, workitems):
     '''
     Send a message to the specified slack url and channel.
     :param url: The URL given to you by the incoming WebHook in Slack
@@ -20,22 +20,36 @@ def send_message_to_slack(url, channel, workitem):
     '''
     payload = {
         "channel": channel,
+        "text": "Some new work item updates!",
         "attachments": [
-            {
-                "fallback": "<%s|%s %s> has been updated!" % (workitem.url, workitem.type, workitem.id),
-                "pretext": "A workitem has been updated!",
-                "color": "good",
-                "fields": [{
-                               "title": "Update",
-                               "value": "<%s|%s %s: %s> \nState has been changed to %s" % (
-                               workitem.url, workitem.type, workitem.id, workitem.summary, workitem.state),
-                               "short": False
-                           }
-                ]
-            }
         ]
     }
-    log.info("Sending an update to slack for work item %s" % workitem.id)
+    for workitem in workitems:
+        state = workitem.state
+        if state == "New":
+            color = "#000000"
+        elif state == "In Progress":
+            color = "A0D8F1"  # blue
+        elif state == "Implemented":
+            color = "good"
+        elif state == "Done":
+            color = "good"
+        elif state == "Invalid":
+            color = "danger"
+        else:
+            color = "warning"
+        payload["attachments"].append({
+            "fallback": "<%s|%s %s> has been updated!" % (workitem.url, workitem.type, workitem.id),
+            "color": color,
+            "fields": [{
+                           "value": "<%s|%s %s: %s> \nState has been changed to %s" % (workitem.url, workitem.type,
+                                                                                       workitem.id, workitem.summary,
+                                                                                       workitem.state),
+                           "short": False
+                       }
+            ]
+        })
+    log.info("Sending an update to slack")
     requests.post(url, data=json.dumps(payload))
 
 
@@ -92,10 +106,12 @@ def run():
     while True:
         log.info("Grabbing all work items for our projects.")
         for rtc, channel in squad_list:
+            slack_outbound = []
             workitems = rtc.get_squad_workitems()
             for workitem in workitems:
                 if has_status_changed(workitem):
-                    send_message_to_slack(env["SLACK_URL"], channel, workitem)
+                    slack_outbound.append(workitem)
+            send_message_to_slack(env["SLACK_URL"], channel, slack_outbound)
 
         time.sleep(env["POLLING_INTERVAL"])
 
