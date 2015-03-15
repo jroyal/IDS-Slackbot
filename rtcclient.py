@@ -2,10 +2,15 @@ __author__ = 'jhroyal'
 import requests
 import json
 import xmltodict
+import logging as log
 
 
 class RTCWorkItem():
+    '''
+    Create an object to encapsulate all the info we are returning in a work item.
+    '''
     def __init__(self, obj_json):
+        log.debug("Creating a RTCWorkItem for %s" % obj_json["dc:identifier"])
         self.summary = obj_json["dc:title"]
         self.id = obj_json["dc:identifier"]
         type_string = obj_json["dc:type"]["rdf:resource"]
@@ -17,7 +22,13 @@ class RTCWorkItem():
         self.url = obj_json["rdf:resource"]
 
     def get_state(self, url):
-        # states: idea = new, defined = in progress, tested=implemented, state.s2=invalid, verified=done
+        '''
+        Since RTC doesn't provide a human readable version of the state we need to translate them.
+        states: idea = new, defined = in progress, tested=implemented, state.s2=invalid, verified=done
+
+        :param url: The URL provided by RTC we parse to get the state
+        :return The State in terms that match the UI
+        '''
         value = "Unknown State"
         if "story" in url:
             if "idea" in url:
@@ -51,46 +62,53 @@ class RTCWorkItem():
 
 
 class RTCClient(object):
+    '''
+    A class to encapsulate the work needed to send REST calls to the IBM Devops Service RTC backend.
+    '''
     def __init__(self, url, user, password, project):
+        log.info("Creating a RTCClient for %s" % project)
         self.base_url = url
         self.jazz_user = user
         self.jazz_pass = password
         self.project = project
         self.project_uuid = None
-        auth_uri = "/authenticated/identity"
+
         self.session = requests.Session()
         self.session.verify = False
         self.session.allow_redirects = True
         self.session.headers = {'accept': 'application/json'}
         self.session.auth = (self.jazz_user, self.jazz_pass)
 
-        print "Request for authenticated resource"
+        log.debug("Request for authenticated resource")
+        auth_uri = "/authenticated/identity"
         response = self.session.get(self.base_url + auth_uri, verify=False)
 
-        print response.headers
-
         if 'x-com-ibm-team-repository-web-auth-msg' in response.headers and response.headers['x-com-ibm-team-repository-web-auth-msg'] == 'authrequired':
-            print "Not currently authenticated"
+            log.debug("Not currently authenticated")
 
             # Form response
-            print "Sending login POST"
+            log.debug("Sending login POST")
             login_response = self.session.post(self.base_url + '/j_security_check',
                                                data={'j_username': self.jazz_user, 'j_password': self.jazz_pass})
-            print login_response.headers
+            log.debug(login_response.headers)
 
             if 'x-com-ibm-team-repository-web-auth-msg' in login_response.headers and login_response.headers['x-com-ibm-team-repository-web-auth-msg'] == 'authrequired':
-                print "Failed to authenticate"
-                print login_response.status_code
-                print login_response.text
+                log.error("Failed to authenticate")
+                log.debug(login_response.status_code)
+                log.debug(login_response.text)
                 raise Exception("Failed to login: ", login_response.text)
 
-            print "Getting authenticated resource again now that we should be logged in:"
+            log.debug("Getting authenticated resource again now that we should be logged in:")
             response = self.session.get(self.base_url + auth_uri)
-            print response.headers
-            print response.text
+            log.debug(response.headers)
+            log.debug(response.text)
 
     def _find_project_uuid(self):
-        print "Getting project uuid"
+        '''
+        Find the unique project id used in RTC backend.
+        :return: UUID of the objects project
+        '''
+        log.debug("Getting project uuid")
         uuid = None
         url = "/process/project-areas"
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -101,16 +119,28 @@ class RTCClient(object):
                 uuid = project["jp06:url"][project["jp06:url"].rfind("/") + 1:]
         return uuid
 
-
     def get_work_item(self, itemNumber):
+        '''
+        Get a work item's information
+
+        Only captures the ID, Title, State, OwnedBy, and Type fields.
+        :param itemNumber: The work item ID number
+        :return: RTCWorkItem
+        '''
+        log.info("Getting info on work item %s" % itemNumber)
         url = "/oslc/workitems/%s.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type" % itemNumber
         response = self.session.get(self.base_url + url, verify=False)
-        print json.dumps(json.loads(response.text), indent=4, sort_keys=True)
+        # json.dumps(json.loads(response.text), indent=4, sort_keys=True)
         return RTCWorkItem(json.loads(response.text))
 
-
     def get_squad_workitems(self):
-        print "Getting squad workitems"
+        '''
+        Get a projects work items. No filtering on them for now.
+
+        Only captures the ID, Title, State, OwnedBy, and Type fields.
+        :return: Array of RTCWorkItems
+        '''
+        log.info("Getting squad work items for project %s" % self.project)
         workitems = []
         if self.project_uuid is None:
             self.project_uuid = self._find_project_uuid()
@@ -120,4 +150,5 @@ class RTCClient(object):
         # print json.dumps(json.loads(response.text), indent=4, sort_keys=True)
         for workitem in unparsed_json["oslc_cm:results"]:
             workitems.append(RTCWorkItem(workitem))
+        log.debug("Found %s work items" % len(workitems))
         return workitems

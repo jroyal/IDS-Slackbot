@@ -6,9 +6,18 @@ import json
 import yaml
 import sqlite3
 import time
+import logging as log
+import sys
 
 
 def send_message_to_slack(url, channel, workitem):
+    '''
+    Send a message to the specified slack url and channel.
+    :param url: The URL given to you by the incoming WebHook in Slack
+    :param channel: The channel you want to post in
+    :param workitem: The RTCWorkItem Object that contains the information we are sending out
+    :return: None
+    '''
     payload = {
         "channel": channel,
         "attachments": [
@@ -26,11 +35,16 @@ def send_message_to_slack(url, channel, workitem):
             }
         ]
     }
-    print "sending a message to slack"
+    log.info("Sending an update to slack for work item %s" % workitem.id)
     requests.post(url, data=json.dumps(payload))
 
 
 def has_status_changed(workitem):
+    '''
+    Update the DB with the status given by the work item.
+    :param workitem: RTCWorkItem we are checking
+    :return: True if work item is new or status has changed. False otherwise.
+    '''
     workitem_has_changed = False
     conn = sqlite3.connect("rtcworkitem.db")
     db = conn.cursor()
@@ -39,13 +53,13 @@ def has_status_changed(workitem):
     db_line = db.fetchone()
     if db_line:
         if db_line[1] != workitem.state:
-            print "Workitem %s has changed." % workitem.id
+            log.info("Workitem %s has changed." % workitem.id)
             db.execute("UPDATE workitems SET state=? WHERE id=?", (workitem.state, workitem.id))
             workitem_has_changed = True
         else:
             workitem_has_changed = False
     else:
-        print "Adding workitem %s to the db" % workitem.id
+        log.info("Adding workitem %s to the db" % workitem.id)
         db.execute("INSERT INTO workitems VALUES (?, ?)", (workitem.id, workitem.state))
         workitem_has_changed = True
 
@@ -55,7 +69,18 @@ def has_status_changed(workitem):
 
 
 def run():
-    env = yaml.load(file("env.yaml"))
+    '''
+    Main method used in this program. Creates a series of RTCClients to talk to the respective projects. Sends a
+    message to Slack if a work item has an updated status.
+    :return: None
+    '''
+    log.info("Starting to run")
+    try:
+        env = yaml.load(file("env.yaml"))
+    except yaml.scanner.ScannerError as e:
+        log.error("YAML is incorrectly defined. \n %s" % e)
+        sys.exit(2)
+    log.info("Environment file loaded.")
     squad_list = []
     for squad in env["SQUAD_LIST"]:
         rtc = RTCClient(env["JAZZ_URL"],
@@ -65,6 +90,7 @@ def run():
         squad_list.append((rtc, squad["channel"]))
 
     while True:
+        log.info("Grabbing all work items for our projects.")
         for rtc, channel in squad_list:
             workitems = rtc.get_squad_workitems()
             for workitem in workitems:
@@ -75,4 +101,6 @@ def run():
 
 
 if __name__ == '__main__':
+    log.basicConfig(filename='rtc-slack.log', level=log.DEBUG, format='%(asctime)s %(levelname)s:%(message)s',
+                    datefmt='%m/%d/%Y %H:%M:%S')
     run()
