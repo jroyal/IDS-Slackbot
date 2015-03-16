@@ -117,6 +117,7 @@ def run():
                     os.getenv('PROJECT'))
     squad_list.append((rtc, os.getenv("SLACK_CHANNEL")))
 
+    first_time_through = True
     while True:
         log.info("Grabbing all work items for our projects.")
         for rtc, channel in squad_list:
@@ -125,9 +126,9 @@ def run():
             for workitem in workitems:
                 if has_status_changed(workitem):
                     slack_outbound.append(workitem)
-            if len(slack_outbound) > 0:
+            if len(slack_outbound) > 0 and not first_time_through:
                 send_message_to_slack(os.getenv("SLACK_URL"), channel, slack_outbound)
-
+        first_time_through = False
         time.sleep(os.getenv("POLLING_INTERVAL"))
 
 
