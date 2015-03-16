@@ -129,7 +129,7 @@ def run():
             if len(slack_outbound) > 0 and not first_time_through:
                 send_message_to_slack(os.getenv("SLACK_URL"), channel, slack_outbound)
         first_time_through = False
-        time.sleep(os.getenv("POLLING_INTERVAL"))
+        time.sleep(float(os.getenv("POLLING_INTERVAL")))
 
 
 port = os.getenv('VCAP_APP_PORT', '5000')
