@@ -7,8 +7,24 @@ import yaml
 import sqlite3
 import time
 import logging as log
-import sys
+import sys, os
+from flask import Flask
+from flask import request
+from multiprocessing import Process
 
+
+app = Flask(__name__)
+
+
+@app.route('/', methods=['POST'])
+def rtc_command():
+    requested_id = request.form["text"]
+    rtc = RTCClient(os.getenv('JAZZ_URL'),
+                    os.getenv('JAZZ_USERNAME'),
+                    os.getenv('JAZZ_PASSWORD'),
+                    os.getenv('PROJECT'))
+    workitem = rtc.get_work_item(requested_id)
+    return "Workitem %s: %s" % (workitem.id, workitem.summary)
 
 def send_message_to_slack(url, channel, workitems):
     '''
@@ -89,19 +105,13 @@ def run():
     :return: None
     '''
     log.info("Starting to run")
-    try:
-        env = yaml.load(file("env.yaml"))
-    except yaml.scanner.ScannerError as e:
-        log.error("YAML is incorrectly defined. \n %s" % e)
-        sys.exit(2)
-    log.info("Environment file loaded.")
     squad_list = []
-    for squad in env["SQUAD_LIST"]:
-        rtc = RTCClient(env["JAZZ_URL"],
-                        env["JAZZ_USERNAME"],
-                        env["JAZZ_PASSWORD"],
-                        squad["squad"])
-        squad_list.append((rtc, squad["channel"]))
+    # for squad in env["SQUAD_LIST"]:
+    rtc = RTCClient(os.getenv('JAZZ_URL'),
+                    os.getenv('JAZZ_USERNAME'),
+                    os.getenv('JAZZ_PASSWORD'),
+                    os.getenv('PROJECT'))
+    squad_list.append((rtc, os.getenv("SLACK_CHANNEL")))
 
     while True:
         log.info("Grabbing all work items for our projects.")
@@ -112,12 +122,15 @@ def run():
                 if has_status_changed(workitem):
                     slack_outbound.append(workitem)
             if len(slack_outbound) > 0:
-                send_message_to_slack(env["SLACK_URL"], channel, slack_outbound)
+                send_message_to_slack(os.getenv("SLACK_URL"), channel, slack_outbound)
 
-        time.sleep(env["POLLING_INTERVAL"])
+        time.sleep(os.getenv("POLLING_INTERVAL"))
 
 
-if __name__ == '__main__':
+port = os.getenv('VCAP_APP_PORT', '5000')
+if __name__ == "__main__":
     log.basicConfig(filename='rtc-slack.log', level=log.DEBUG, format='%(asctime)s %(levelname)s:%(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S')
-    run()
+    p = Process(target=run)
+    p.start()
+    app.run(host='0.0.0.0', port=int(port))
