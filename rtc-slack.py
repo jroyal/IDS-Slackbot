@@ -19,6 +19,10 @@ app = Flask(__name__)
 @app.route('/', methods=['POST'])
 def rtc_command():
     requested_id = request.form["text"]
+    token = request.form["token"]
+    if os.getenv("SLACK_TOKEN") != token:
+        return "Invalid slack token."
+
     rtc = RTCClient(os.getenv('JAZZ_URL'),
                     os.getenv('JAZZ_USERNAME'),
                     os.getenv('JAZZ_PASSWORD'),
