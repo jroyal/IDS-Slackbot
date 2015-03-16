@@ -13,6 +13,7 @@ class RTCWorkItem():
         log.debug("Creating a RTCWorkItem for %s" % obj_json["dc:identifier"])
         self.summary = obj_json["dc:title"]
         self.id = obj_json["dc:identifier"]
+        self.description = obj_json["dc:description"]
         type_string = obj_json["dc:type"]["rdf:resource"]
         if "task" in type_string:
             self.type = "Task"
@@ -128,7 +129,7 @@ class RTCClient(object):
         :return: RTCWorkItem
         '''
         log.info("Getting info on work item %s" % itemNumber)
-        url = "/oslc/workitems/%s.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type" % itemNumber
+        url = "/oslc/workitems/%s.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type,dc:description" % itemNumber
         response = self.session.get(self.base_url + url, verify=False)
         # json.dumps(json.loads(response.text), indent=4, sort_keys=True)
         return RTCWorkItem(json.loads(response.text))
@@ -144,7 +145,7 @@ class RTCClient(object):
         workitems = []
         if self.project_uuid is None:
             self.project_uuid = self._find_project_uuid()
-        url = "/oslc/contexts/%s/workitems.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type" % self.project_uuid
+        url = "/oslc/contexts/%s/workitems.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type,dc:description" % self.project_uuid
         response = self.session.get(self.base_url + url, verify=False)
         unparsed_json = json.loads(response.text)
         # print json.dumps(json.loads(response.text), indent=4, sort_keys=True)
