@@ -8,10 +8,10 @@ A bot that will push to slack when RTC task items status changes.
 3. Run `python rtc-slack.py` I currently have the program running in a infinite loop but you can change it to just run once and use a cron job if you like.
 
 ###Environment Variables Needed
-POLLING_INTERVAL
-SLACK_URL
-SLACK_CHANNEL
-PROJECT
-JAZZ_URL
-JAZZ_USERNAME
-JAZZ_PASSWORD
+* POLLING_INTERVAL
+* SLACK_URL
+* SLACK_CHANNEL
+* PROJECT
+* JAZZ_URL
+* JAZZ_USERNAME
+* JAZZ_PASSWORD
