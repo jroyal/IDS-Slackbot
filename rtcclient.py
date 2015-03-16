@@ -14,13 +14,15 @@ class RTCWorkItem():
         self.summary = obj_json["dc:title"]
         self.id = obj_json["dc:identifier"]
         self.description = obj_json["dc:description"]
+        self.project = obj_json["project_name"]
+        self.url = obj_json["rdf:resource"]
+        self.state = self.get_state(obj_json["rtc_cm:state"]["rdf:resource"])
         type_string = obj_json["dc:type"]["rdf:resource"]
         if "task" in type_string:
             self.type = "Task"
         elif "Story":
             self.type = "Story"
-        self.state = self.get_state(obj_json["rtc_cm:state"]["rdf:resource"])
-        self.url = obj_json["rdf:resource"]
+
 
     def get_state(self, url):
         '''
@@ -66,7 +68,7 @@ class RTCClient(object):
     '''
     A class to encapsulate the work needed to send REST calls to the IBM Devops Service RTC backend.
     '''
-    def __init__(self, url, user, password, project):
+    def __init__(self, url, user, password, project=None):
         log.info("Creating a RTCClient for %s" % project)
         self.base_url = url
         self.jazz_user = user
@@ -120,6 +122,22 @@ class RTCClient(object):
                 uuid = project["jp06:url"][project["jp06:url"].rfind("/") + 1:]
         return uuid
 
+    def _find_project_name(self, project_uuid):
+        '''
+        Find the project name if you know the project uuid.
+        :return: Project Name
+        '''
+        log.debug("Getting project name")
+        project_name = None
+        url = "/process/project-areas"
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        response = self.session.get(self.base_url + url, verify=False, headers=headers)
+        projects = xmltodict.parse(response.text)["jp06:project-areas"]["jp06:project-area"]
+        for project in projects:
+            if project_uuid == project["jp06:url"][project["jp06:url"].rfind("/") + 1:]:
+                project_name = project["@jp06:name"]
+        return project_name
+
     def get_work_item(self, itemNumber):
         '''
         Get a work item's information
@@ -129,10 +147,15 @@ class RTCClient(object):
         :return: RTCWorkItem
         '''
         log.info("Getting info on work item %s" % itemNumber)
-        url = "/oslc/workitems/%s.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type,dc:description" % itemNumber
+        #url = "/oslc/workitems/%s.json?oslc_cm.properties=dc:identifier,dc:title,rtc_cm:state,rtc_cm:ownedBy,dc:type,dc:description" % itemNumber
+        url = "/oslc/workitems/%s.json" % itemNumber
+
         response = self.session.get(self.base_url + url, verify=False)
-        # json.dumps(json.loads(response.text), indent=4, sort_keys=True)
-        return RTCWorkItem(json.loads(response.text))
+        json_obj = json.loads(response.text)
+        #print json.dumps(json_obj, indent=4, sort_keys=True)
+        project_url = json_obj["rtc_cm:projectArea"]["rdf:resource"]
+        json_obj["project_name"] = self._find_project_name(project_url[project_url.rfind("/")+1:])
+        return RTCWorkItem(json_obj)
 
     def get_squad_workitems(self):
         '''
@@ -150,6 +173,7 @@ class RTCClient(object):
         unparsed_json = json.loads(response.text)
         # print json.dumps(json.loads(response.text), indent=4, sort_keys=True)
         for workitem in unparsed_json["oslc_cm:results"]:
+            workitem["project_name"] = self.project
             workitems.append(RTCWorkItem(workitem))
         log.debug("Found %s work items" % len(workitems))
         return workitems

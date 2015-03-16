@@ -28,7 +28,10 @@ def rtc_command():
                     os.getenv('JAZZ_PASSWORD'),
                     os.getenv('PROJECT'))
     workitem = rtc.get_work_item(requested_id)
-    return "*<%s|Workitem %s: %s>*\nState: %s\nDescription: %s" % (workitem.url, workitem.id, workitem.summary, workitem.state, workitem.description)
+    return "*<%s|%s %s %s: %s>*\n" \
+           "State: %s\n" \
+           "Description: %s" % (workitem.url, workitem.project, workitem.type, workitem.id, workitem.summary,
+                                workitem.state, workitem.description)
 
 def send_message_to_slack(url, channel, workitems):
     '''
@@ -132,10 +135,15 @@ def run():
         time.sleep(float(os.getenv("POLLING_INTERVAL")))
 
 
-port = os.getenv('VCAP_APP_PORT', '5000')
-if __name__ == "__main__":
+# port = os.getenv('VCAP_APP_PORT', '5000')
+# if __name__ == "__main__":
+#     log.basicConfig(filename='rtc-slack.log', level=log.DEBUG, format='%(asctime)s %(levelname)s:%(message)s',
+#                     datefmt='%m/%d/%Y %H:%M:%S')
+#     p = Process(target=run)
+#     p.start()
+#     app.run(host='0.0.0.0', port=int(port))
+if __name__ == '__main__':
     log.basicConfig(filename='rtc-slack.log', level=log.DEBUG, format='%(asctime)s %(levelname)s:%(message)s',
-                    datefmt='%m/%d/%Y %H:%M:%S')
-    p = Process(target=run)
-    p.start()
-    app.run(host='0.0.0.0', port=int(port))
+                     datefmt='%m/%d/%Y %H:%M:%S')
+    rtc = RTCClient("https://hub.jazz.net/ccm08", "alchemy", "qeMDPRn6", project="")
+    print rtc.get_work_item(43746)
