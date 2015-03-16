@@ -28,10 +28,11 @@ def rtc_command():
                     os.getenv('JAZZ_PASSWORD'),
                     os.getenv('PROJECT'))
     workitem = rtc.get_work_item(requested_id)
-    return "*<%s|%s %s %s: %s>*\n" \
+    return "*<%s|%s %s: %s>*\n" \
+           "IDS Project: %s" \
            "State: %s\n" \
-           "Description: %s" % (workitem.url, workitem.project, workitem.type, workitem.id, workitem.summary,
-                                workitem.state, workitem.description)
+           "Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
+                                workitem.project, workitem.state, workitem.description)
 
 def send_message_to_slack(url, channel, workitems):
     '''
