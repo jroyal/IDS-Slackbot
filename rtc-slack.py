@@ -16,8 +16,10 @@ from multiprocessing import Process
 app = Flask(__name__)
 env = dict()
 
-@app.route('/', methods=['POST'])
+@app.route('/', methods=['GET', 'POST'])
 def rtc_command():
+    if request.method == "GET":
+        return "RTC Command is running and waiting for requests"
     requested_id = request.form["text"]
     token = request.form["token"]
     if env["SLACK_TOKEN"] != token:
