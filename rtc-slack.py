@@ -20,8 +20,6 @@ def rtc_command():
     if request.method == "GET":
         return "RTC Command is running and waiting for requests"
     requested = request.form["text"]
-    user = request.form["user_name"]
-    print user
     token = request.form["token"]
     if env["SLACK_TOKEN"] != token:
         return "Invalid slack token."
@@ -32,9 +30,18 @@ def rtc_command():
         return "*<%s|%s %s: %s>*\n" \
                "IDS Project: %s\n" \
                "State: %s\n" \
-               "Description: %s\n" \
-               "User: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
-                                    workitem.project, workitem.state, workitem.description, user)
+               "Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
+                                    workitem.project, workitem.state, workitem.description)
+    else:
+        workitems = rtc.get_users_workitems(requested)
+        output = ""
+        for workitem in workitems:
+            output += "*<%s|%s %s: %s>*\n" \
+               "IDS Project: %s\n" \
+               "State: %s\n" \
+               "Description: %s\n\n" % (workitem.url, workitem.type, workitem.id, workitem.summary,
+                                    workitem.project, workitem.state, workitem.description)
+        return output
 
 
 
