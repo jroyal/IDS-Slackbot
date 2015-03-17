@@ -10,6 +10,7 @@ class RTCWorkItem():
     Create an object to encapsulate all the info we are returning in a work item.
     '''
     def __init__(self, url, obj):
+        print json.dumps(obj, indent=4, sort_keys=True)
         log.debug("Creating a RTCWorkItem for %s" % obj["id"])
         self.id = obj["id"]
         self.summary = obj["summary"]
@@ -109,8 +110,14 @@ class RTCClient(object):
         url = "/rpt/repository/workitem?fields=workitem/workItem[owner/name='%s']/" \
               "(summary|id|description|owner/name|state/name|projectArea/name|type/name)" % user
         response = self.session.get(self.base_url + url, verify=False)
-        output = xmltodict.parse(response.text)["workitem"]["workItem"]
-        #print json.dumps(output, indent=4, sort_keys=True)
-        for workitem in output:
-            workitems.append(RTCWorkItem(self.base_url, workitem))
+        output = xmltodict.parse(response.text)
+        if "workItem" not in output["workitem"]:
+            return None
+        output = output["workitem"]["workItem"]
+        print json.dumps(output, indent=4, sort_keys=True)
+        if not isinstance(output, list):
+            workitems.append(RTCWorkItem(self.base_url, output))
+        else:
+            for workitem in output:
+                workitems.append(RTCWorkItem(self.base_url, workitem))
         return workitems

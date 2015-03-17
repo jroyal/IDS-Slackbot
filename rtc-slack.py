@@ -30,16 +30,18 @@ def rtc_command():
         return "*<%s|%s %s: %s>*\n" \
                "IDS Project: %s\n" \
                "State: %s\n" \
-               "Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
+               "> Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
                                     workitem.project, workitem.state, workitem.description)
     else:
         workitems = rtc.get_users_workitems(requested)
+        if workitems == None:
+            return "No workitems found."
         output = ""
         for workitem in workitems:
             output += "*<%s|%s %s: %s>*\n" \
                "IDS Project: %s\n" \
                "State: %s\n" \
-               "Description: %s\n\n" % (workitem.url, workitem.type, workitem.id, workitem.summary,
+               "> Description: %s\n\n" % (workitem.url, workitem.type, workitem.id, workitem.summary,
                                     workitem.project, workitem.state, workitem.description)
         return output
 
