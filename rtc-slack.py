@@ -20,8 +20,8 @@ env = dict()
 def rtc_command():
     if request.method == "GET":
         return "RTC Command is running and waiting for requests"
-    time.sleep(2)
-    return "After sleeping for 2 seconds."
+    time.sleep(3)
+    return "After sleeping for 3 seconds."
     # requested_id = request.form["text"]
     # token = request.form["token"]
     # if env["SLACK_TOKEN"] != token:
