@@ -14,22 +14,23 @@ from multiprocessing import Process
 
 
 app = Flask(__name__)
-
+env = dict()
 
 @app.route('/', methods=['POST'])
 def rtc_command():
     requested_id = request.form["text"]
     token = request.form["token"]
-    if os.getenv("SLACK_TOKEN") != token:
+    if env["SLACK_TOKEN"] != token:
         return "Invalid slack token."
 
-    rtc = RTCClient(os.getenv('JAZZ_URL'),
-                    os.getenv('JAZZ_USERNAME'),
-                    os.getenv('JAZZ_PASSWORD'),
-                    os.getenv('PROJECT'))
+    rtc = RTCClient(env['JAZZ_URL'],
+                    env['JAZZ_USERNAME'],
+                    env['JAZZ_PASSWORD'],
+                    env['PROJECT'])
     workitem = rtc.get_work_item(requested_id)
+
     return "*<%s|%s %s: %s>*\n" \
-           "IDS Project: %s" \
+           "IDS Project: %s\n" \
            "State: %s\n" \
            "Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
                                 workitem.project, workitem.state, workitem.description)
@@ -106,20 +107,21 @@ def has_status_changed(workitem):
     return workitem_has_changed
 
 
-def run():
+def run(env):
     '''
     Main method used in this program. Creates a series of RTCClients to talk to the respective projects. Sends a
     message to Slack if a work item has an updated status.
     :return: None
     '''
+    print env
     log.info("Starting to run")
     squad_list = []
     # for squad in env["SQUAD_LIST"]:
-    rtc = RTCClient(os.getenv('JAZZ_URL'),
-                    os.getenv('JAZZ_USERNAME'),
-                    os.getenv('JAZZ_PASSWORD'),
-                    os.getenv('PROJECT'))
-    squad_list.append((rtc, os.getenv("SLACK_CHANNEL")))
+    rtc = RTCClient(env['JAZZ_URL'],
+                    env['JAZZ_USERNAME'],
+                    env['JAZZ_PASSWORD'],
+                    env['PROJECT'])
+    squad_list.append((rtc, env["SLACK_CHANNEL"]))
 
     first_time_through = True
     while True:
@@ -131,15 +133,37 @@ def run():
                 if has_status_changed(workitem):
                     slack_outbound.append(workitem)
             if len(slack_outbound) > 0 and not first_time_through:
-                send_message_to_slack(os.getenv("SLACK_URL"), channel, slack_outbound)
+                send_message_to_slack(env["SLACK_URL"], channel, slack_outbound)
         first_time_through = False
-        time.sleep(float(os.getenv("POLLING_INTERVAL")))
+        time.sleep(env["POLLING_INTERVAL"])
 
 
-port = os.getenv('VCAP_APP_PORT', '5000')
 if __name__ == "__main__":
     log.basicConfig(filename='rtc-slack.log', level=log.DEBUG, format='%(asctime)s %(levelname)s:%(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S')
-    p = Process(target=run)
+    global env
+    try:
+        if len(sys.argv) > 1 and sys.argv[1] == "local":
+            log.info("Try loading from a local env.yaml file")
+            env = yaml.load(file("env.yaml"))
+            env["HOST"] = 'localhost'
+            env["PORT"] = 5000
+        else:
+            log.info("Loading environment variables from Bluemix")
+            env["JAZZ_URL"] = os.getenv('JAZZ_URL')
+            env["JAZZ_USERNAME"] = os.getenv('JAZZ_USERNAME')
+            env["JAZZ_PASSWORD"] = os.getenv('JAZZ_PASSWORD')
+            env["PROJECT"] = os.getenv('PROJECT')
+            env["POLLING_INTERVAL"] = float(os.getenv("POLLING_INTERVAL"))
+            env["SLACK_URL"] = os.getenv("SLACK_URL")
+            env["SLACK_CHANNEL"] = os.getenv("SLACK_CHANNEL")
+            env["SLACK_TOKEN"] = os.getenv("SLACK_TOKEN")
+            env["HOST"] = '0.0.0.0'
+            env["PORT"] = os.getenv('VCAP_APP_PORT', '5000')
+    except Exception as e:
+            log.error("Failed to load the environment \n %s" % e)
+            sys.exit(2)
+    print env
+    p = Process(target=run, args=(env,))
     p.start()
-    app.run(host='0.0.0.0', port=int(port))
+    app.run(host=env["HOST"], port=env["PORT"])
