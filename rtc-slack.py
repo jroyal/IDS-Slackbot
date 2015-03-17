@@ -42,7 +42,7 @@ def rtc_command():
                "IDS Project: %s\n" \
                "State: %s\n" \
                "> Description: %s\n\n" % (workitem.url, workitem.type, workitem.id, workitem.summary,
-                                    workitem.project, workitem.state, workitem.description)
+                                    workitem.project, workitem.state, workitem.description.replace("\n", "\n>"))
         return output
 
 

@@ -10,7 +10,6 @@ class RTCWorkItem():
     Create an object to encapsulate all the info we are returning in a work item.
     '''
     def __init__(self, url, obj):
-        print json.dumps(obj, indent=4, sort_keys=True)
         log.debug("Creating a RTCWorkItem for %s" % obj["id"])
         self.id = obj["id"]
         self.summary = obj["summary"]
@@ -114,7 +113,7 @@ class RTCClient(object):
         if "workItem" not in output["workitem"]:
             return None
         output = output["workitem"]["workItem"]
-        print json.dumps(output, indent=4, sort_keys=True)
+        #print json.dumps(output, indent=4, sort_keys=True)
         if not isinstance(output, list):
             workitems.append(RTCWorkItem(self.base_url, output))
         else:
