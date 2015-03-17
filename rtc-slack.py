@@ -38,11 +38,15 @@ def rtc_command():
             return "No workitems found."
         output = ""
         for workitem in workitems:
+            if workitem.description:
+                description = workitem.description.replace("\n", "\n>")
+            else:
+                description = "No description."
             output += "*<%s|%s %s: %s>*\n" \
                "IDS Project: %s\n" \
                "State: %s\n" \
                "> Description: %s\n\n" % (workitem.url, workitem.type, workitem.id, workitem.summary,
-                                    workitem.project, workitem.state, workitem.description.replace("\n", "\n>"))
+                                    workitem.project, workitem.state, description)
         return output
 
 
