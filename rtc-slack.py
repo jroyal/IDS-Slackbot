@@ -20,21 +20,24 @@ env = dict()
 def rtc_command():
     if request.method == "GET":
         return "RTC Command is running and waiting for requests"
-    requested_id = request.form["text"]
-    token = request.form["token"]
-    if env["SLACK_TOKEN"] != token:
-        return "Invalid slack token."
-
-    rtc = RTCClient(env['JAZZ_URL'],
-                    env['JAZZ_USERNAME'],
-                    env['JAZZ_PASSWORD'],
-                    env['PROJECT'])
-    workitem = rtc.get_work_item(requested_id)
-
-    return "*<%s|%s %s: %s>*\n" \
-           "IDS Project: %s State: %s\n" \
-           "Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
-                                workitem.project, workitem.state, workitem.description)
+    time.sleep(2)
+    return "After sleeping for 2 seconds."
+    # requested_id = request.form["text"]
+    # token = request.form["token"]
+    # if env["SLACK_TOKEN"] != token:
+    #     return "Invalid slack token."
+    #
+    # rtc = RTCClient(env['JAZZ_URL'],
+    #                 env['JAZZ_USERNAME'],
+    #                 env['JAZZ_PASSWORD'],
+    #                 env['PROJECT'])
+    # workitem = rtc.get_work_item(requested_id)
+    #
+    # return "*<%s|%s %s: %s>*\n" \
+    #        "IDS Project: %s\n" \
+    #        "State: %s\n" \
+    #        "Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
+    #                             workitem.project, workitem.state, workitem.description)
 
 def send_message_to_slack(url, channel, workitems):
     '''
