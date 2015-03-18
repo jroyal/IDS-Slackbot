@@ -9,6 +9,7 @@ import sys
 import os
 from flask import Flask
 from flask import request
+import traceback
 
 
 
@@ -24,30 +25,31 @@ def rtc_command():
     if env["SLACK_TOKEN"] != token:
         return "Invalid slack token."
     rtc = env["RTC"]
-    if re.match('^[0-9]+$', requested):
-        workitem = rtc.get_work_item(requested)
+    try:
+        if re.match('^[0-9]+$', requested):
+            workitem = rtc.get_work_item(requested)
 
-        return "*<%s|%s %s: %s>*\n" \
-               "IDS Project: %s\n" \
-               "State: %s\n" \
-               "> Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
-                                    workitem.project, workitem.state, workitem.description)
-    else:
-        workitems = rtc.get_users_workitems(requested)
-        if workitems == None:
-            return "No workitems found."
-        output = ""
-        for workitem in workitems:
-            if workitem.description:
-                description = workitem.description.replace("\n", "\n>")
-            else:
-                description = "No description."
-            output += "*<%s|%s %s: %s>*\n" \
-               "IDS Project: %s\n" \
-               "State: %s\n" \
-               "> Description: %s\n\n" % (workitem.url, workitem.type, workitem.id, workitem.summary,
-                                    workitem.project, workitem.state, description)
-        return output
+            return "*<%s|%s %s: %s>*\n" \
+                   "IDS Project: %s\n" \
+                   "State: %s\n" \
+                   "> Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
+                                        workitem.project, workitem.state, workitem.description)
+        else:
+            workitems = rtc.get_users_workitems(requested)
+            if workitems == None or len(workitems) == 0:
+                return "No workitems found."
+            
+            output = ""
+            for workitem in workitems:
+                output += "*<%s|%s %s: %s>*\n" \
+                          "IDS Project: %s\n" \
+                          "State: %s\n" \
+                          "> Description: %s\n\n" % (workitem.url, workitem.type, workitem.id, workitem.summary,
+                                                      workitem.project, workitem.state, workitem.description)
+            return output
+    except Exception as e:
+        log.error(traceback.format_exc())
+        return "Oh no! Something went wrong!"
 
 
 

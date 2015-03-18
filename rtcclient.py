@@ -19,6 +19,12 @@ class RTCWorkItem():
         self.state = obj["state"]["name"]
         self.type = obj["type"]["name"]
 
+        if self.description:
+            # Make the description a block quote in slack
+            self.description = self.description.replace("\n", "\n>")
+        else:
+            self.description = "No description."
+
     def __str__(self):
         return """%s %s
     Summary: %s
@@ -107,7 +113,7 @@ class RTCClient(object):
         workitems = []
 
         url = "/rpt/repository/workitem?fields=workitem/workItem[owner/name='%s']/" \
-              "(summary|id|description|owner/name|state/name|projectArea/name|type/name)" % user
+              "(summary|id|description|owner/name|state/(name|group)|projectArea/name|type/name)" % user
         response = self.session.get(self.base_url + url, verify=False)
         output = xmltodict.parse(response.text)
         if "workItem" not in output["workitem"]:
@@ -115,8 +121,10 @@ class RTCClient(object):
         output = output["workitem"]["workItem"]
         #print json.dumps(output, indent=4, sort_keys=True)
         if not isinstance(output, list):
-            workitems.append(RTCWorkItem(self.base_url, output))
+            if output["state"]["group"] == "open":
+                workitems.append(RTCWorkItem(self.base_url, output))
         else:
             for workitem in output:
-                workitems.append(RTCWorkItem(self.base_url, workitem))
+                if workitem["state"]["group"] == "open":
+                    workitems.append(RTCWorkItem(self.base_url, workitem))
         return workitems
