@@ -2,8 +2,12 @@
 A python application that serves as a go-between of the IDS(IBM Bluemix Devops Services) Track and Plan dashboards and slack.
 
 ## Current requests that are allowed
-* `/rtc [work item id]` -- Returns a link to the workitem, id, summary, and basic description.
-* `/rtc [user name]` -- Returns all work items that the user owns that are in an open state.
+
+| *Command*   | *Example* | *Description* |
+|------------|-----------------------------------|-----------------|
+| `/rtc [work item id]` | `/rtc 40033`   | Returns a link to the workitem, id, summary, and basic description. |
+| `/rtc [user name]` | `/rtc James Royal`   | Returns all work items that the user owns that are in an open state. | 
+
 
 ## Well how do I install it?
 
