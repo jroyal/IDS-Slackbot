@@ -1,17 +1,25 @@
 # RTC-Slackbot
-A bot that will push to slack when RTC task items status changes.
+A python application that serves as a go-between of the IDS(IBM Bluemix Devops Services) Track and Plan dashboards and slack.
 
-#How to Install
+## Current requests that are allowed
+* `/rtc [work item id]` -- Returns a link to the workitem, id, summary, and basic description.
+* `/rtc [user name]` -- Returns all work items that the user owns that are in an open state.
 
-1. Go to your itegrations in slack and add an Incoming WebHook. Set up the default channel if you want. The program allows for you to override where you send messages so this isn't that important. Set the name to whatever you want and same with the icon. You need to grab the webhook URL so that you can place it into your env.yaml.
-2. Clone this repo to somewhere on a server. Update the env-sample.yaml with the information you want. 
-3. Run `python rtc-slack.py` I currently have the program running in a infinite loop but you can change it to just run once and use a cron job if you like.
+## Well how do I install it?
 
-###Environment Variables Needed
-* POLLING_INTERVAL
-* SLACK_URL
-* SLACK_CHANNEL
-* PROJECT
+Click the button below to fork into IBM DevOps Services and deploy your own copy of this application on Bluemix. Note the app will not yet work; you need to set the environment variables in bluemix and set up the slash command in slack.
+
+[![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/jroyal/RTC-Slackbot.git)
+
+#### Setting up the slash command
+
+Go to to your slack settings where you can add integrations, and add a new slash command. Add your new Bluemix url that you got from your deploy to the URL field. Set up the command to /rtc or whatever else you might want. Copy down your token because you will need it in the next step.
+
+#### Setting the environment variables
+
+Go to the [Bluemix Dashboard](https://console.ng.bluemix.net/?ace_base=true). Click on the tile that represents your new application. In the left side bar, click on `environment variables` and then in the center of the screen `USER_DEFINED`. Set the following variables.
 * JAZZ_URL
 * JAZZ_USERNAME
 * JAZZ_PASSWORD
+* SLACK_TOKEN
+
