@@ -88,7 +88,7 @@ class RTCClient(object):
         url = "/rpt/repository/workitem?fields=workitem/workItem[id=%s]/" \
               "(summary|id|description|owner/name|state/name|projectArea/name|type/name)" % itemNumber
 
-        response = self.session.get(self.base_url + url, verify=False)
+        response = self.session.get(self.base_url + url, verify=False, timeout=2.85)
         output = xmltodict.parse(response.text)["workitem"]["workItem"]
         #print json.dumps(output, indent=4, sort_keys=True)
         return RTCWorkItem(self.base_url, output)
@@ -105,7 +105,7 @@ class RTCClient(object):
 
         url = "/rpt/repository/workitem?fields=workitem/workItem[projectArea/name='%s']/" \
               "(summary|id|description|owner/name|state/name|projectArea/name|type/name)" % project
-        response = self.session.get(self.base_url + url, verify=False)
+        response = self.session.get(self.base_url + url, verify=False, timeout=2.85)
         output = xmltodict.parse(response.text)["workitem"]["workItem"]
         #print json.dumps(output, indent=4, sort_keys=True)
         for workitem in output:
@@ -118,7 +118,7 @@ class RTCClient(object):
 
         url = "/rpt/repository/workitem?fields=workitem/workItem[owner/name='%s']/" \
               "(summary|id|description|owner/name|state/(name|group)|projectArea/name|type/name)" % user
-        response = self.session.get(self.base_url + url, verify=False)
+        response = self.session.get(self.base_url + url, verify=False, timeout=2.85)
         output = xmltodict.parse(response.text)
         if "workItem" not in output["workitem"]:
             return None
@@ -139,7 +139,7 @@ class RTCClient(object):
 
         url = "/rpt/repository/workitem?fields=workitem/workItem[projectArea/name='%s' and target/id='backlog']/" \
               "(summary|id|description|owner/name|state/(name|group)|projectArea/name|type/name|stringComplexity)" % project
-        response = self.session.get(self.base_url + url, verify=False)
+        response = self.session.get(self.base_url + url, verify=False, timeout=2.85)
         output = xmltodict.parse(response.text)
         if "workItem" not in output["workitem"]:
             return None

@@ -11,6 +11,7 @@ import os
 from flask import Flask
 from flask import request
 import traceback
+import time
 
 
 
@@ -65,7 +66,8 @@ def rtc_command():
             return output
         else:
             return "Unknown request."
-
+    except requests.exceptions.ReadTimeout:
+        return "Request timed out :("
     except Exception as e:
         log.error(traceback.format_exc())
         if env["SLACK_ERROR_URL"] and env["SLACK_ERROR_CHANNEL"]:
