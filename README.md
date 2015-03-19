@@ -45,6 +45,13 @@ I added the ability for a user or channel to be notified if something would have
 
 ![error](images/admin_error.PNG "error")
 
+
+#### Can I install it locally?
+
+Yes you can. The only thing you will need to do is fill out the env-sample.yaml and change the name to env.yaml. That should allow you to run the code locally. You can then send REST calls to http://localhost:5000 that spoof the /rtc calls. The payload should look something like this
+
+![payload](images/spoof-payload.PNG "payload")
+
 -----
 
 ### Suggestions or bugs?
