@@ -2,6 +2,7 @@ __author__ = 'jhroyal'
 
 from rtcclient import RTCClient
 import json
+import requests
 import re
 import yaml
 import logging as log
@@ -21,6 +22,7 @@ def rtc_command():
     if request.method == "GET":
         return "RTC Command is running and waiting for requests"
     requested = request.form["text"]
+    user = request.form["user_name"]
     token = request.form["token"]
     if env["SLACK_TOKEN"] != token:
         return "Invalid slack token."
@@ -66,10 +68,33 @@ def rtc_command():
 
     except Exception as e:
         log.error(traceback.format_exc())
+        if env["SLACK_ERROR_URL"] and env["SLACK_ERROR_CHANNEL"]:
+            send_message_to_admin(env["SLACK_ERROR_URL"], env["SLACK_ERROR_CHANNEL"], user, requested, traceback.format_exc())
         return "Oh no! Something went wrong!"
 
 
-
+def send_message_to_admin(url, channel, user, call, stacktrace):
+    payload = {
+        "channel": channel,
+        "text": "There was an ERROR!!",
+        "attachments": [
+            {
+                "fallback": "There was an error; check the log",
+                "color": "danger",
+                "fields": [
+                    {
+                        "title": "Here is some more information",
+                        "value": "User: %s\n"
+                                 "Command: %s\n"
+                                 "%s" % (user, call, stacktrace),
+                        "short": False
+                    }
+                ]
+            }
+        ]
+    }
+    log.info("Sending an update to slack")
+    requests.post(url, data=json.dumps(payload))
 
 if __name__ == "__main__":
     log.basicConfig(filename='rtc-slack.log', level=log.DEBUG, format='%(asctime)s %(levelname)s:%(message)s',
