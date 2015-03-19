@@ -31,6 +31,9 @@ def rtc_command():
     try:
         if re.match('^[0-9]+$', requested):
             workitem = rtc.get_work_item(requested)
+            output = "*Finding information for work item %s*\n\n" % requested
+            if workitem == None or len(workitem) == 0:
+                return output + "I couldn't find any work items with the id %s." % requested
 
             return "*<%s|%s %s: %s>*\n" \
                    "IDS Project: %s\n" \
@@ -42,7 +45,8 @@ def rtc_command():
             workitems = rtc.get_users_workitems(user)
             output = "*The work items for %s*\n\n" % user
             if workitems == None or len(workitems) == 0:
-                return output + "No workitems found."
+                return output + "I couldn't find any work items for %s.\n" \
+                                "If you think this is wrong, make sure that you have the users full name." % user
 
             for workitem in workitems:
                 output += "*<%s|%s %s: %s>*\n" \
@@ -56,7 +60,8 @@ def rtc_command():
             output = "*The backlog for %s*\n\n" % project
             workitems = rtc.get_project_backlog(project)
             if workitems == None or len(workitems) == 0:
-                return output + "No items in the backlog!"
+                return output + "No items in the backlog!\n" \
+                                "If you think this is wrong, make sure that you have the correct team name."
 
             for workitem in workitems:
                 output += "*<%s|%s %s: %s>*\n" \
