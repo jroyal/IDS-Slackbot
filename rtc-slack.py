@@ -32,7 +32,7 @@ def rtc_command():
         if re.match('^[0-9]+$', requested):
             workitem = rtc.get_work_item(requested)
             output = "*Finding information for work item %s*\n\n" % requested
-            if workitem == None or len(workitem) == 0:
+            if workitem == None:
                 return output + "I couldn't find any work items with the id %s." % requested
 
             return "*<%s|%s %s: %s>*\n" \
