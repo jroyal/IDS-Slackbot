@@ -1,10 +1,6 @@
 JAZZ_USERNAME: user                                 # A Jazz username used to login to the REST API
 JAZZ_PASSWORD: pass                                 # A Jazz password used to login to the REST API
 JAZZ_URL: https://hub.jazz.net/ccmXX                # The URL needed for the REST API. Must set the last two digits.
-SLACK_URL: "https://hooks.slack.com/services...."   # The URL given to you by your incoming web hook slack bot.
-POLLING_INTERVAL: 60                                # The polling interval that we check for updates on.
-SQUAD_LIST:
-  - squad: Sample Project A                         # The name in the filed against field
-    channel: #spA                                   # The channel you would want updates pushed to for that squad.
-  - squad: Sample Project B
-    channel: #random
+SLACK_ERROR_URL: "https://hooks.slack.com/services...."   # The URL given to you by your incoming web hook slack bot.
+SLACK_TOKEN: xxxxxxxxxxxxxxxx                       # The token issued by your slack slash command
+SLACK_ERROR_CHANNEL: '@royal'                       # The channel you want to push errors too
