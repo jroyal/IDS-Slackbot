@@ -70,7 +70,7 @@ def rtc_command():
         return "Request timed out :("
     except Exception as e:
         log.error(traceback.format_exc())
-        if env["SLACK_ERROR_URL"] and env["SLACK_ERROR_CHANNEL"]:
+        if "SLACK_ERROR_URL" in env and "SLACK_ERROR_CHANNEL" in env:
             send_message_to_admin(env["SLACK_ERROR_URL"], env["SLACK_ERROR_CHANNEL"], user, requested, traceback.format_exc())
         return "Oh no! Something went wrong!"
 
@@ -114,6 +114,8 @@ if __name__ == "__main__":
             env["JAZZ_USERNAME"] = os.getenv('JAZZ_USERNAME')
             env["JAZZ_PASSWORD"] = os.getenv('JAZZ_PASSWORD')
             env["SLACK_TOKEN"] = os.getenv("SLACK_TOKEN")
+            env["SLACK_ERROR_URL"] = os.getenv("SLACK_ERROR_URL")
+            env["SLACK_ERROR_CHANNEL"] = os.getenv("SLACK_ERROR_CHANNEL")
             env["HOST"] = '0.0.0.0'
             env["PORT"] = os.getenv('VCAP_APP_PORT', '5000')
 
