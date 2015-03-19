@@ -35,25 +35,26 @@ def rtc_command():
                    "> Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
                                         workitem.project, workitem.state, workitem.description)
         elif "user" in requested:
-            workitems = rtc.get_users_workitems(requested)
+            user = requested.replace("user", "").strip()
+            workitems = rtc.get_users_workitems(user)
+            output = "*The work items for %s*\n\n" % user
             if workitems == None or len(workitems) == 0:
-                return "No workitems found."
-            
-            output = ""
+                return output + "No workitems found."
+
             for workitem in workitems:
                 output += "*<%s|%s %s: %s>*\n" \
                           "IDS Project: %s\n" \
                           "State: %s\n" \
                           "> Description: %s\n\n" % (workitem.url, workitem.type, workitem.id, workitem.summary,
-                                                      workitem.project, workitem.state, workitem.description)
+                                                     workitem.project, workitem.state, workitem.description)
             return output
         elif "backlog" in requested:
             project = requested.replace("backlog", "").strip()
+            output = "*The backlog for %s*\n\n" % project
             workitems = rtc.get_project_backlog(project)
             if workitems == None or len(workitems) == 0:
-                return "No items in the backlog!"
+                return output + "No items in the backlog!"
 
-            output = "*The backlog for %s*\n\n" % project
             for workitem in workitems:
                 output += "*<%s|%s %s: %s>*\n" \
                           "%s owns this %s workitem\n\n"  \
