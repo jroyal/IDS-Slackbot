@@ -61,7 +61,8 @@ def rtc_command():
             workitems = rtc.get_project_backlog(project)
             if workitems == None or len(workitems) == 0:
                 return output + "No items in the backlog!\n" \
-                                "If you think this is wrong, make sure that you have the correct team name."
+                                "If you think this is wrong, make sure that you have the correct team name. " \
+                                "Try /rtc help for more information."
 
             for workitem in workitems:
                 output += "*<%s|%s %s: %s>*\n" \
@@ -70,7 +71,14 @@ def rtc_command():
                              workitem.owner, workitem.state)
             return output
         else:
-            return "Unknown request."
+            help_message = "*RTC-SLACKBOT help*\n\n" \
+                           "`/rtc [id]` -- `/rtc 40034` -- Get information on a specific work item \n" \
+                           "`/rtc user [name]` -- `/rtc user James Royal` -- Get a users open work items\n" \
+                           "`/rtc backlog [team]` -- `/rtc backlog alchemy | Alchemy-OS-Innovation-A` -- Get a teams backlog"
+            if "help" in requested:
+                return help_message
+            else:
+                return "*Unknown command!* \n\n" + help_message
     except requests.exceptions.ReadTimeout:
         return "Request timed out :("
     except Exception as e:
