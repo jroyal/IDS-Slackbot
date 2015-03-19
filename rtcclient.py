@@ -18,6 +18,10 @@ class RTCWorkItem():
         self.url = url + "/resource/itemName/com.ibm.team.workitem.WorkItem/%s" % obj["id"]
         self.state = obj["state"]["name"]
         self.type = obj["type"]["name"]
+        self.owner = obj["owner"]["name"]
+
+        if "stringComplexity" in obj:
+            self.points = obj["stringComplexity"]
 
         if self.description:
             # Make the description a block quote in slack
@@ -114,6 +118,27 @@ class RTCClient(object):
 
         url = "/rpt/repository/workitem?fields=workitem/workItem[owner/name='%s']/" \
               "(summary|id|description|owner/name|state/(name|group)|projectArea/name|type/name)" % user
+        response = self.session.get(self.base_url + url, verify=False)
+        output = xmltodict.parse(response.text)
+        if "workItem" not in output["workitem"]:
+            return None
+        output = output["workitem"]["workItem"]
+        #print json.dumps(output, indent=4, sort_keys=True)
+        if not isinstance(output, list):
+            if output["state"]["group"] == "open":
+                workitems.append(RTCWorkItem(self.base_url, output))
+        else:
+            for workitem in output:
+                if workitem["state"]["group"] == "open":
+                    workitems.append(RTCWorkItem(self.base_url, workitem))
+        return workitems
+
+    def get_project_backlog(self, project):
+        log.info("Getting the backlog for %s" % project)
+        workitems = []
+
+        url = "/rpt/repository/workitem?fields=workitem/workItem[projectArea/name='%s' and target/id='backlog']/" \
+              "(summary|id|description|owner/name|state/(name|group)|projectArea/name|type/name|stringComplexity)" % project
         response = self.session.get(self.base_url + url, verify=False)
         output = xmltodict.parse(response.text)
         if "workItem" not in output["workitem"]:

@@ -34,7 +34,7 @@ def rtc_command():
                    "State: %s\n" \
                    "> Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
                                         workitem.project, workitem.state, workitem.description)
-        else:
+        elif "user" in requested:
             workitems = rtc.get_users_workitems(requested)
             if workitems == None or len(workitems) == 0:
                 return "No workitems found."
@@ -47,6 +47,22 @@ def rtc_command():
                           "> Description: %s\n\n" % (workitem.url, workitem.type, workitem.id, workitem.summary,
                                                       workitem.project, workitem.state, workitem.description)
             return output
+        elif "backlog" in requested:
+            project = requested.replace("backlog", "").strip()
+            workitems = rtc.get_project_backlog(project)
+            if workitems == None or len(workitems) == 0:
+                return "No items in the backlog!"
+
+            output = "*The backlog for %s*\n\n" % project
+            for workitem in workitems:
+                output += "*<%s|%s %s: %s>*\n" \
+                          "%s owns this %s workitem\n\n"  \
+                          % (workitem.url, workitem.type, workitem.id, workitem.summary,
+                             workitem.owner, workitem.state)
+            return output
+        else:
+            return "Unknown request."
+
     except Exception as e:
         log.error(traceback.format_exc())
         return "Oh no! Something went wrong!"
