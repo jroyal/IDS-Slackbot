@@ -5,10 +5,15 @@ A python application that serves as a go-between of the IDS(IBM Bluemix Devops S
 
 | *Command*   | *Example* | *Description* |
 |------------|-----------------------------------|-----------------|
-| `/rtc [work item id]` | `/rtc 40033`   | Get information on a specific work item. |
+| `/rtc [work item id]` | `/rtc 43746`   | Get information on a specific work item. |
 | `/rtc user [name]` | `/rtc user James Royal`   | Get a users open work items | 
 | `/rtc backlog [team]` | `/rtc backlog alchemy | Alchemy-OS-Innovation-A` | Get a teams backlog. | 
 
+--
+#### What does it look like?
+
+![`/rtc 43746`](images/single-workitem.PNG "`/rtc 43746`")
+![`/rtc user James Royal`](images/user-workitems.PNG "`/rtc user James Royal`")
 
 ## Well how do I install it?
 
@@ -36,5 +41,14 @@ Go to the [Bluemix Dashboard](https://console.ng.bluemix.net/?ace_base=true). Cl
 #### Optional Error Updates
 
 I added the ability for a user or channel to be notified if something would have caused a server error. This was essentially so I could see if someone tried a request that failed for a reason that I didn't expect. If you would like to get this functionality create a new incoming webhook and set the two optional env variables listed in the table above.
+
+
+![error](images/admin_error.PNG "error")
+
+-----
+
+### Suggestions or bugs?
+
+Go and make an issue and tag it as a bug or enhancement. I will try to get an update out for bugs as soon as I can, and I'll do my best to add enhancements. Better yet, if you have a fix create a pull request with your fix! :)
 
 
