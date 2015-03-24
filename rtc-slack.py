@@ -1,19 +1,19 @@
 __author__ = 'jhroyal'
 
-from rtcclient import RTCClient
 import json
-import requests
 import re
-import yaml
 import logging as log
 import sys
 import os
+import traceback
+
+import requests
+import yaml
 from flask import Flask
 from flask import request
-import traceback
-import time
 
-
+from lib.rtcclient import RTCClient
+from extensions.backlog import retrieve_backlog
 
 app = Flask(__name__)
 env = dict()
@@ -57,19 +57,8 @@ def rtc_command():
             return output
         elif "backlog" in requested:
             project = requested.replace("backlog", "").strip()
-            output = "*The backlog for %s*\n\n" % project
-            workitems = rtc.get_project_backlog(project)
-            if workitems == None or len(workitems) == 0:
-                return output + "No items in the backlog!\n" \
-                                "If you think this is wrong, make sure that you have the correct team name. " \
-                                "Try /rtc help for more information."
+            return retrieve_backlog(rtc, project)
 
-            for workitem in workitems:
-                output += "*<%s|%s %s: %s>*\n" \
-                          "%s owns this %s workitem\n\n"  \
-                          % (workitem.url, workitem.type, workitem.id, workitem.summary,
-                             workitem.owner, workitem.state)
-            return output
         else:
             help_message = "*RTC-SLACKBOT help*\n\n" \
                            "`/rtc [id]` -- `/rtc 40034` -- Get information on a specific work item \n" \

@@ -3,38 +3,7 @@ import requests
 import json
 import xmltodict
 import logging as log
-
-
-class RTCWorkItem():
-    '''
-    Create an object to encapsulate all the info we are returning in a work item.
-    '''
-    def __init__(self, url, obj):
-        log.debug("Creating a RTCWorkItem for %s" % obj["id"])
-        self.id = obj["id"]
-        self.summary = obj["summary"]
-        self.description = obj["description"]
-        self.project = obj["projectArea"]["name"]
-        self.url = url + "/resource/itemName/com.ibm.team.workitem.WorkItem/%s" % obj["id"]
-        self.state = obj["state"]["name"]
-        self.type = obj["type"]["name"]
-        self.owner = obj["owner"]["name"]
-
-        if "stringComplexity" in obj:
-            self.points = obj["stringComplexity"]
-
-        if self.description:
-            # Make the description a block quote in slack
-            self.description = self.description.replace("\n", "\n>")
-        else:
-            self.description = "No description."
-
-    def __str__(self):
-        return """%s %s
-    Summary: %s
-    State: %s
-        """ % (self.type, self.id, self.summary, self.state)
-
+from rtcworkitem import RTCWorkItem
 
 class RTCClient(object):
     '''
@@ -76,6 +45,12 @@ class RTCClient(object):
             log.debug(response.headers)
             log.debug(response.text)
 
+    def get_url(self):
+        return self.base_url
+
+    def get(self, url):
+        return self.session.get(self.base_url + url, verify=False, timeout=2.85)
+
     def get_work_item(self, itemNumber):
         '''
         Get a work item's information
@@ -95,6 +70,18 @@ class RTCClient(object):
         output = output["workitem"]["workItem"]
         print json.dumps(output, indent=4, sort_keys=True)
         return RTCWorkItem(self.base_url, output)
+
+
+    def add_comment_to_workitem(self, itemNumber, comment):
+        new_comment = {"dc:description": comment}
+        self.session.headers["Content-Type"] = "application/x-oslc-cm-change-request+json"
+        self.session.headers["accept"] = "text/json"
+        url = "/oslc/workitems/%s/rtc_cm:comments" % itemNumber
+        response = self.session.post(self.base_url + url, verify=False, timeout=2.85, data=json.dumps(new_comment))
+        output = response.text
+        print output
+        print json.dumps(json.loads(output), indent=4, sort_keys=True)
+
 
     def get_squad_workitems(self, project):
         '''
@@ -121,27 +108,6 @@ class RTCClient(object):
 
         url = "/rpt/repository/workitem?fields=workitem/workItem[owner/name='%s']/" \
               "(summary|id|description|owner/name|state/(name|group)|projectArea/name|type/name)" % user
-        response = self.session.get(self.base_url + url, verify=False, timeout=2.85)
-        output = xmltodict.parse(response.text)
-        if "workItem" not in output["workitem"]:
-            return None
-        output = output["workitem"]["workItem"]
-        #print json.dumps(output, indent=4, sort_keys=True)
-        if not isinstance(output, list):
-            if output["state"]["group"] == "open":
-                workitems.append(RTCWorkItem(self.base_url, output))
-        else:
-            for workitem in output:
-                if workitem["state"]["group"] == "open":
-                    workitems.append(RTCWorkItem(self.base_url, workitem))
-        return workitems
-
-    def get_project_backlog(self, project):
-        log.info("Getting the backlog for %s" % project)
-        workitems = []
-
-        url = "/rpt/repository/workitem?fields=workitem/workItem[projectArea/name='%s' and target/id='backlog']/" \
-              "(summary|id|description|owner/name|state/(name|group)|projectArea/name|type/name|stringComplexity)" % project
         response = self.session.get(self.base_url + url, verify=False, timeout=2.85)
         output = xmltodict.parse(response.text)
         if "workItem" not in output["workitem"]:
