@@ -1,6 +1,6 @@
 __author__ = 'jhroyal'
 import xmltodict
-
+import requests
 from lib.rtcworkitem import RTCWorkItem
 
 def get_users_workitems(rtc, user):
@@ -8,7 +8,10 @@ def get_users_workitems(rtc, user):
     result = "*The work items for %s*\n\n" % user
     url = "/rpt/repository/workitem?fields=workitem/workItem[owner/name='%s']/" \
           "(summary|id|description|owner/name|state/(name|group)|projectArea/name|type/name)" % user
-    response = rtc.get(url)
+    try:
+        response = rtc.get(url)
+    except requests.exceptions.ReadTimeout:
+        return "Request timed out :("
     output = xmltodict.parse(response.text)
     if "workItem" not in output["workitem"]:
         result += "I couldn't find any work items for %s.\n" \

@@ -1,6 +1,6 @@
 __author__ = 'jhroyal'
 import xmltodict
-
+import requests
 from lib.rtcworkitem import RTCWorkItem
 
 def retrieve_backlog(rtc, project):
@@ -9,7 +9,10 @@ def retrieve_backlog(rtc, project):
     result = "*The backlog for %s*\n\n" % project
     url = "/rpt/repository/workitem?fields=workitem/workItem[projectArea/name='%s' and target/id='backlog']/" \
           "(summary|id|description|owner/name|state/(name|group)|projectArea/name|type/name|stringComplexity)" % project
-    response = rtc.get(url)
+    try:
+        response = rtc.get(url)
+    except requests.exceptions.ReadTimeout:
+        return "Request timed out :("
     output = xmltodict.parse(response.text)
     if "workItem" not in output["workitem"]:
         result += "No items in the backlog!\n" \

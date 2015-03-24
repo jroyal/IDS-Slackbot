@@ -1,5 +1,6 @@
 __author__ = 'jhroyal'
 import xmltodict
+import requests
 from lib.rtcworkitem import RTCWorkItem
 
 def get_work_item(rtc, itemNumber):
@@ -19,7 +20,10 @@ def get_work_item(rtc, itemNumber):
         if "workItem" not in output["workitem"]:
             result += "I couldn't find any work items with the id %s." % itemNumber
         output = output["workitem"]["workItem"]
-        workitem = RTCWorkItem(rtc.get_url(), output)
+        try:
+            workitem = RTCWorkItem(rtc.get_url(), output)
+        except requests.exceptions.ReadTimeout:
+            return "Request timed out :("
 
         result += "*<%s|%s %s: %s>*\n" \
                    "IDS Project: %s\n" \
