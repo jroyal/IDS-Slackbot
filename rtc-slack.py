@@ -15,6 +15,7 @@ from flask import request
 from lib.rtcclient import RTCClient
 from extensions.backlog import retrieve_backlog
 from extensions.user import get_users_workitems
+from extensions.singleworkitem import get_work_item
 
 app = Flask(__name__)
 env = dict()
@@ -31,16 +32,7 @@ def rtc_command():
     rtc = env["RTC"]
     try:
         if re.match('^[0-9]+$', requested):
-            workitem = rtc.get_work_item(requested)
-            output = "*Finding information for work item %s*\n\n" % requested
-            if workitem == None:
-                return output + "I couldn't find any work items with the id %s." % requested
-
-            return "*<%s|%s %s: %s>*\n" \
-                   "IDS Project: %s\n" \
-                   "State: %s\n" \
-                   "> Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
-                                        workitem.project, workitem.state, workitem.description)
+            return get_work_item(rtc, requested)
 
         elif "user" in requested:
             user = requested.replace("user", "").strip()

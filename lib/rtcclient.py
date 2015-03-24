@@ -51,26 +51,6 @@ class RTCClient(object):
     def get(self, url):
         return self.session.get(self.base_url + url, verify=False, timeout=2.85)
 
-    def get_work_item(self, itemNumber):
-        '''
-        Get a work item's information
-
-        Only captures the ID, Title, State, OwnedBy, and Type fields.
-        :param itemNumber: The work item ID number
-        :return: RTCWorkItem or None if there isn't one
-        '''
-        log.info("Getting info on work item %s" % itemNumber)
-        url = "/rpt/repository/workitem?fields=workitem/workItem[id=%s]/" \
-              "(summary|id|description|owner/name|state/name|projectArea/name|type/name)" % itemNumber
-
-        response = self.session.get(self.base_url + url, verify=False, timeout=2.85)
-        output = xmltodict.parse(response.text)
-        if "workItem" not in output["workitem"]:
-            return None
-        output = output["workitem"]["workItem"]
-        print json.dumps(output, indent=4, sort_keys=True)
-        return RTCWorkItem(self.base_url, output)
-
 
     def add_comment_to_workitem(self, itemNumber, comment):
         new_comment = {"dc:description": comment}
