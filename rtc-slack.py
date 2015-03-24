@@ -14,6 +14,7 @@ from flask import request
 
 from lib.rtcclient import RTCClient
 from extensions.backlog import retrieve_backlog
+from extensions.user import get_users_workitems
 
 app = Flask(__name__)
 env = dict()
@@ -40,21 +41,11 @@ def rtc_command():
                    "State: %s\n" \
                    "> Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
                                         workitem.project, workitem.state, workitem.description)
+
         elif "user" in requested:
             user = requested.replace("user", "").strip()
-            workitems = rtc.get_users_workitems(user)
-            output = "*The work items for %s*\n\n" % user
-            if workitems == None or len(workitems) == 0:
-                return output + "I couldn't find any work items for %s.\n" \
-                                "If you think this is wrong, make sure that you have the users full name." % user
+            return get_users_workitems(rtc, user)
 
-            for workitem in workitems:
-                output += "*<%s|%s %s: %s>*\n" \
-                          "IDS Project: %s\n" \
-                          "State: %s\n" \
-                          "> Description: %s\n\n" % (workitem.url, workitem.type, workitem.id, workitem.summary,
-                                                     workitem.project, workitem.state, workitem.description)
-            return output
         elif "backlog" in requested:
             project = requested.replace("backlog", "").strip()
             return retrieve_backlog(rtc, project)
