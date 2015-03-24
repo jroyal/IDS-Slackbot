@@ -14,20 +14,21 @@ def get_work_item(rtc, itemNumber):
         result = "*Finding information for work item %s*\n\n" % itemNumber
         url = "/rpt/repository/workitem?fields=workitem/workItem[id=%s]/" \
               "(summary|id|description|owner/name|state/name|projectArea/name|type/name)" % itemNumber
-
-        response = rtc.get(url)
-        output = xmltodict.parse(response.text)
-        if "workItem" not in output["workitem"]:
-            result += "I couldn't find any work items with the id %s." % itemNumber
-        output = output["workitem"]["workItem"]
         try:
-            workitem = RTCWorkItem(rtc.get_url(), output)
+            response = rtc.get(url)
         except requests.exceptions.ReadTimeout:
             return "Request timed out :("
+        output = xmltodict.parse(response.text)
+        print output
+        if "workItem" not in output["workitem"]:
+            result += "I couldn't find any work items with the id %s." % itemNumber
+        else:
+            output = output["workitem"]["workItem"]
+            workitem = RTCWorkItem(rtc.get_url(), output)
 
-        result += "*<%s|%s %s: %s>*\n" \
-                   "IDS Project: %s\n" \
-                   "State: %s\n" \
-                   "> Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
-                                        workitem.project, workitem.state, workitem.description)
+            result += "*<%s|%s %s: %s>*\n" \
+                       "IDS Project: %s\n" \
+                       "State: %s\n" \
+                       "> Description: %s" % (workitem.url, workitem.type, workitem.id, workitem.summary,
+                                            workitem.project, workitem.state, workitem.description)
         return result
