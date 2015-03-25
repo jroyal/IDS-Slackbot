@@ -1,11 +1,16 @@
 __author__ = 'jhroyal'
 import xmltodict
+import re
 import requests
 from lib.rtcworkitem import RTCWorkItem
 
 
 def retrieve_backlog(rtc, project):
-    print "PROJECT: %s" % project
+    success, output = _find_full_project_name(rtc, project)
+    if not success:
+        return output
+    else:
+        project = output
     workitems = []
     result = "*The backlog for %s*\n\n" % project
     url = "/rpt/repository/workitem?fields=workitem/workItem[projectArea/name='%s' and target/id='backlog']/" \
@@ -39,5 +44,18 @@ def retrieve_backlog(rtc, project):
     return result
 
 
-def get_all_projects():
-    pass
+def _find_full_project_name(rtc, requested_project):
+    '''
+    Find the project name if you know the project uuid.
+    :return: Project Name
+    '''
+    match_projects = []
+    for project in rtc.projects:
+        if requested_project.lower() in project.lower():
+            match_projects.append(project)
+    if len(match_projects) > 1:
+        return False, "Too many projects found with %s. Project name needs to be more specific." % requested_project
+    elif len(match_projects) == 1:
+        return True, match_projects[0]
+    else:
+        return False, "No projects found that match %s." % requested_project
