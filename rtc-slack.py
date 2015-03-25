@@ -20,6 +20,8 @@ env = dict()
 def rtc_workitem():
     if request.method == "GET":
         return "RTC Workitem Command is running and waiting for requests"
+    if not valid_token(request.form["token"]):
+        return "Invalid token! Please verify that you have the correct tokens setup."
     item_number = request.form["text"]
 
     if re.match('^[0-9]+$', item_number):
@@ -36,6 +38,8 @@ def rtc_workitem():
 def user_lookup():
     if request.method == "GET":
         return "RTC user lookup is running and waiting for requests"
+    if not valid_token(request.form["token"]):
+        return "Invalid token! Please verify that you have the correct tokens setup."
     user = request.form["text"]
     return get_users_workitems(env["RTC"], user)
 
@@ -43,8 +47,17 @@ def user_lookup():
 def backlog_lookup():
     if request.method == "GET":
         return "RTC backlog lookup is running and waiting for requests"
+    if not valid_token(request.form["token"]):
+        return "Invalid token! Please verify that you have the correct tokens setup."
     team = request.form["text"]
     return retrieve_backlog(env["RTC"], team)
+
+
+def valid_token(token):
+    for stashed_token in env["SLACK_TOKENS"]:
+        if token == stashed_token:
+            return True
+    return False
 
 if __name__ == "__main__":
     log.basicConfig(filename='rtc-slack.log', level=log.DEBUG, format='%(asctime)s %(levelname)s:%(message)s',
@@ -61,9 +74,14 @@ if __name__ == "__main__":
             env["JAZZ_URL"] = os.getenv('JAZZ_URL')
             env["JAZZ_USERNAME"] = os.getenv('JAZZ_USERNAME')
             env["JAZZ_PASSWORD"] = os.getenv('JAZZ_PASSWORD')
-            env["SLACK_TOKEN"] = os.getenv("SLACK_TOKEN")
             env["SLACK_ERROR_URL"] = os.getenv("SLACK_ERROR_URL")
             env["SLACK_ERROR_CHANNEL"] = os.getenv("SLACK_ERROR_CHANNEL")
+            if os.getenv("WORKITEM_TOKEN"):
+                env["SLACK_TOKENS"].append(os.getenv("WORKITEM_TOKEN"))
+            if os.getenv("BACKLOG_TOKEN"):
+                env["SLACK_TOKENS"].append(os.getenv("BACKLOG_TOKEN"))
+            if os.getenv("USER_TOKEN"):
+                env["SLACK_TOKENS"].append(os.getenv("USER_TOKEN"))
             env["HOST"] = '0.0.0.0'
             env["PORT"] = os.getenv('VCAP_APP_PORT', '5000')
 
