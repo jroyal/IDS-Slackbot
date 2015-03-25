@@ -77,6 +77,7 @@ if __name__ == "__main__":
             env["JAZZ_PASSWORD"] = os.getenv('JAZZ_PASSWORD')
             env["SLACK_ERROR_URL"] = os.getenv("SLACK_ERROR_URL")
             env["SLACK_ERROR_CHANNEL"] = os.getenv("SLACK_ERROR_CHANNEL")
+            env["SLACK_TOKENS"] = []
             if os.getenv("WORKITEM_TOKEN"):
                 env["SLACK_TOKENS"].append(os.getenv("WORKITEM_TOKEN"))
             if os.getenv("BACKLOG_TOKEN"):
