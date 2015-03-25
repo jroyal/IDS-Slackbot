@@ -3,6 +3,7 @@ import xmltodict
 import requests
 from lib.rtcworkitem import RTCWorkItem
 
+
 def retrieve_backlog(rtc, project):
     print "PROJECT: %s" % project
     workitems = []
@@ -36,3 +37,7 @@ def retrieve_backlog(rtc, project):
                       % (workitem.url, workitem.type, workitem.id, workitem.summary,
                          workitem.owner, workitem.state)
     return result
+
+
+def get_all_projects():
+    pass
