@@ -40,4 +40,4 @@ def retrieve_backlog(rtc, project):
 
 
 def get_all_projects():
-    pass
+    print "TEST"
