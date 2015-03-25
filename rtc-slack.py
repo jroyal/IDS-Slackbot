@@ -14,7 +14,6 @@ from extensions.user import get_users_workitems
 from extensions.singleworkitem import get_work_item
 
 app = Flask(__name__)
-env = dict()
 
 @app.route('/workitem', methods=['GET', 'POST'])
 def rtc_workitem():
@@ -63,6 +62,7 @@ if __name__ == "__main__":
     log.basicConfig(filename='rtc-slack.log', level=log.DEBUG, format='%(asctime)s %(levelname)s:%(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S')
     global env
+    env = dict()
     try:
         if len(sys.argv) > 1 and sys.argv[1] == "local":
             log.info("Try loading from a local env.yaml file")
@@ -71,6 +71,7 @@ if __name__ == "__main__":
             env["PORT"] = 5000
         else:
             log.info("Loading environment variables from Bluemix")
+            print "Loading environment variables from Bluemix"
             env["JAZZ_URL"] = os.getenv('JAZZ_URL')
             env["JAZZ_USERNAME"] = os.getenv('JAZZ_USERNAME')
             env["JAZZ_PASSWORD"] = os.getenv('JAZZ_PASSWORD')
@@ -89,6 +90,7 @@ if __name__ == "__main__":
                                env['JAZZ_USERNAME'],
                                env['JAZZ_PASSWORD'])
     except Exception as e:
+        print "Failed to load the environment \n %s" % e
         log.error("Failed to load the environment \n %s" % e)
         sys.exit(2)
     print env
