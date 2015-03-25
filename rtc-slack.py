@@ -89,7 +89,7 @@ if __name__ == "__main__":
                                env['JAZZ_USERNAME'],
                                env['JAZZ_PASSWORD'])
     except Exception as e:
-            log.error("Failed to load the environment \n %s" % e)
-            sys.exit(2)
+        log.error("Failed to load the environment \n %s" % e)
+        sys.exit(2)
     print env
     app.run(host=env["HOST"], port=env["PORT"])
