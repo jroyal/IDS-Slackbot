@@ -45,12 +45,25 @@ class RTCClient(object):
             log.debug(response.headers)
             log.debug(response.text)
 
+        self.projects = self.pre_load_projects()
+        print "RTCClient created"
+
+
     def get_url(self):
         return self.base_url
 
     def get(self, url):
         return self.session.get(self.base_url + url, verify=False, timeout=2.85)
 
+    def pre_load_projects(self):
+        print "Preloading projects"
+        url = "/process/project-areas"
+        output = []
+        response = self.get(url)
+        projects = xmltodict.parse(response.text)["jp06:project-areas"]["jp06:project-area"]
+        for project in projects:
+            output.append(project["@jp06:name"])
+        return output
 
     def add_comment_to_workitem(self, itemNumber, comment):
         new_comment = {"dc:description": comment}
