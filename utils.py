@@ -23,11 +23,27 @@ class SlackArgumentParser(argparse.ArgumentParser):
         raise SlackCommandException(message)
 
 
+def check_if_positive(value):
+    """
+    Check if the provided argument value is a positive integer
+    :param value: The value for -n passed to the argparser
+    :return: the value if valid
+    """
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is not a positive integer!" %
+                                         value)
+    return ivalue
+
+
 def get_argument_parser():
-    description = "Application that queries Track and Plan dashboards and sends results to slack."
+    description = "Application that queries Track and Plan dashboards and " \
+                  "sends results to slack."
     parser = SlackArgumentParser(description=description, prog='/ids')
-    parser.add_argument("-n", default=5, help="Number of work items to retrieve. Default is 5.")
-    parser.add_argument("-a", "--all", action="store_true", help="Returns all work items")
+    parser.add_argument("-n", default=5, type=check_if_positive,
+                        help="Number of work items to retrieve. Default is 5.")
+    parser.add_argument("-a", "--all", action="store_true",
+                        help="Returns all work items")
     parser.add_argument("first_name")
     parser.add_argument("last_name")
     return parser
@@ -80,8 +96,6 @@ def send_workitems_to_slack(args, work_items):
     slack_attachments = []
     filtered_workitems = remove_resolved(work_items)
     for index, work_item in enumerate(sorted(filtered_workitems, key=priority_to_val, reverse=True)):
-        if index >= int(args.n) and not args.all:
-            break
         WI = {
             "fallback": "Here are the work items for %s %s!" % (args.first_name, args.last_name),
             "title": "%s %s: %s" % (work_item.type, work_item.id, work_item.summary),
@@ -92,6 +106,8 @@ def send_workitems_to_slack(args, work_items):
                     "*State:* %s \n" % (work_item.project, work_item.priority, work_item.state)
         }
         slack_attachments.append(WI)
+        if index >= int(args.n) - 1 and not args.all:
+            break
 
     slack_text = "Showing %d out of %d work items for *%s %s*!" % \
                  (index + 1, len(filtered_workitems), args.first_name,
