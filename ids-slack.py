@@ -18,6 +18,7 @@ def ids_cli():
         return "IDS Service is running!"
 
     try:
+        os.environ["slack_user_id"] = request.form["user_id"]
         parser = utils.get_argument_parser()
         args = parser.parse_args(request.form["text"].split(" "))
     except utils.SlackCommandException as err:
@@ -26,8 +27,9 @@ def ids_cli():
     owner = args.first_name + " " + args.last_name
     work_items = client.get_work_items_by_owner(owner)
     if work_items is None:
-        return "Unable to find any work items for %s" % owner
-    utils.send_to_slack(args, request.form, work_items)
+        utils.post_to_slack("Unable to find any work items for *%s*" % owner)
+        return "Unable to find any work items for '%s'" % owner
+    utils.send_workitems_to_slack(args, work_items)
     return "Getting your work items"
 
 if __name__ == "__main__":

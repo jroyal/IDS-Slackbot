@@ -50,23 +50,34 @@ def priority_to_val(work_item):
     return conversion[work_item.priority]
 
 
-def send_to_slack(args, slack_form, work_items):
+def post_to_slack(text, attachments=[]):
+    """
+    :param text: Plain text to send in the message
+    :param attachments: JSON-encoded array of attachments.
+                        https://api.slack.com/docs/attachments
+    :return: result of the post
+    """
+    if not text:
+        raise Exception("The 'text' argument cannot be None or empty")
+    payload = {
+        "channel": os.environ["slack_user_id"],
+        "text": str(text),
+        "link_names": 1,
+        "attachments": attachments
+    }
+    print "Posting message to Slack"
+    return requests.post(os.environ["slack_url"], data=json.dumps(payload))
+
+
+def send_workitems_to_slack(args, work_items):
     """
     Send the message to slack that alerts users that a poll has been created
-    :param url: The url to send the poll too
-    :param poll: The json that represents the poll
+    :param args: The command-line arguments provided by the user
+    :param work_items: The list of work items owned by the user provided
     :return: None
     """
     print args
-    print slack_form
-    payload = {
-        "channel": slack_form["user_id"],
-        "text": "<Placeholder text>",
-        "link_names": 1,
-        "attachments": [
-
-        ]
-    }
+    slack_attachments = []
     filtered_workitems = remove_resolved(work_items)
     for index, work_item in enumerate(sorted(filtered_workitems, key=priority_to_val, reverse=True)):
         if index >= int(args.n) and not args.all:
@@ -80,10 +91,10 @@ def send_to_slack(args, slack_form, work_items):
                     "*Priority:* %s\n"
                     "*State:* %s \n" % (work_item.project, work_item.priority, work_item.state)
         }
-        payload["attachments"].append(WI)
+        slack_attachments.append(WI)
 
-    payload["text"] = "Showing %d out of %d work items for %s %s!" % \
-                      (index + 1, len(filtered_workitems), args.first_name,
-                       args.last_name)
-    print "Sending an update to slack"
-    requests.post(os.environ["slack_url"], data=json.dumps(payload))
+    slack_text = "Showing %d out of %d work items for *%s %s*!" % \
+                 (index + 1, len(filtered_workitems), args.first_name,
+                  args.last_name)
+    print "Sending work items to slack"
+    post_to_slack(slack_text, slack_attachments)
