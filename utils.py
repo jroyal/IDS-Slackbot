@@ -61,7 +61,7 @@ def send_to_slack(args, slack_form, work_items):
     print slack_form
     payload = {
         "channel": slack_form["user_id"],
-        "text": "Here are the work items for %s %s!" % (args.first_name, args.last_name),
+        "text": "<Placeholder text>",
         "link_names": 1,
         "attachments": [
 
@@ -82,5 +82,10 @@ def send_to_slack(args, slack_form, work_items):
         }
         payload["attachments"].append(WI)
 
+    payload["text"] = "Showing %d out of %d work items for %s %s!\n" \
+                      "Use `/ids -n %d %s %s` to see all the work items." % \
+                      (index, len(filtered_workitems), args.first_name,
+                       args.last_name, len(filtered_workitems),
+                       args.first_name, args.last_name)
     print "Sending an update to slack"
     requests.post(os.environ["slack_url"], data=json.dumps(payload))
