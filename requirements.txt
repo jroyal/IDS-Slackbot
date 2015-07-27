@@ -1,4 +1,4 @@
-Flask==0.10.1
-PyYAML==3.11
-xmltodict==0.9.2
-requests==2.5.3
+Flask
+requests
+pyIDS
+slacker
