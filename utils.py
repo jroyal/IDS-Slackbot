@@ -69,7 +69,7 @@ def send_to_slack(args, slack_form, work_items):
     }
     filtered_workitems = remove_resolved(work_items)
     for index, work_item in enumerate(sorted(filtered_workitems, key=priority_to_val, reverse=True)):
-        if index >= int(args.n):
+        if index >= int(args.n) and not args.all:
             break
         WI = {
             "fallback": "Here are the work items for %s %s!" % (args.first_name, args.last_name),
@@ -82,10 +82,8 @@ def send_to_slack(args, slack_form, work_items):
         }
         payload["attachments"].append(WI)
 
-    payload["text"] = "Showing %d out of %d work items for %s %s!\n" \
-                      "Use `/ids -n %d %s %s` to see all the work items." % \
-                      (index, len(filtered_workitems), args.first_name,
-                       args.last_name, len(filtered_workitems),
-                       args.first_name, args.last_name)
+    payload["text"] = "Showing %d out of %d work items for %s %s!" % \
+                      (index + 1, len(filtered_workitems), args.first_name,
+                       args.last_name)
     print "Sending an update to slack"
     requests.post(os.environ["slack_url"], data=json.dumps(payload))
