@@ -15,7 +15,7 @@ app = Flask(__name__)
 def ids_cli():
     client = app.config["client"]
     if request.method == "GET":
-        return "IDS Service is running"
+        return "IDS Service is running!"
 
     try:
         parser = utils.get_argument_parser()
