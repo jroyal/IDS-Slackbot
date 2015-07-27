@@ -10,33 +10,24 @@ from flask import request
 
 app = Flask(__name__)
 
-# TODO: Show usages
-class ThrowingArgumentParser(argparse.ArgumentParser):
-    def error(self, message):
-        raise Exception(message)
 
 @app.route('/', methods=['GET', 'POST'])
 def ids_cli():
-    print request.form
     client = app.config["client"]
     if request.method == "GET":
-        print client.get_work_item_by_id(16219).description
         return "IDS Service is running"
 
-    parser = ThrowingArgumentParser(description='Argparse Test script')
-    parser.add_argument("-n", "--name", nargs=2, help='FirstName LastName', required=True)
-
     try:
+        parser = utils.get_argument_parser()
         args = parser.parse_args(request.form["text"].split(" "))
-    except Exception as err:
+    except utils.SlackCommandException as err:
         return str(err)
 
-    owner = args.name[0] + " " + args.name[1]
-    print owner
+    owner = args.first_name + " " + args.last_name
     work_items = client.get_work_items_by_owner(owner)
-    print len(work_items)
-    print work_items
-    utils.send_to_slack(os.environ["slack_url"], request.form["user_id"], work_items)
+    if work_items is None:
+        return "Unable to find any work items for %s" % owner
+    utils.send_to_slack(args, request.form, work_items)
     return "Getting your work items"
 
 if __name__ == "__main__":
@@ -46,6 +37,8 @@ if __name__ == "__main__":
         raise Exception("Please provide a password!")
     if "server" not in os.environ:
         raise Exception("Please provide a jazz server!")
+    if "slack_url" not in os.environ:
+        raise Exception("Please provide an incoming webhook for your slack account!")
     app.config["client"] = IDS("https://hub.jazz.net/"+os.environ["server"],
                                os.environ["user"],
                                os.environ["pass"])
