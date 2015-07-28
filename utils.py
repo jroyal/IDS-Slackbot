@@ -91,7 +91,7 @@ def filter_state(state, work_items):
     """
     result = []
     for work_item in work_items:
-        if work_item.state.upper() == state.upper():
+        if work_item.state.replace(" ", "-").upper() == state.upper():
             result.append(work_item)
     return result
 
