@@ -194,7 +194,7 @@ def send_workitems_to_slack(args, work_items):
     # Filter our work item list
     filtered_workitems = filter_work_items(args, work_items)
 
-    index = 0
+    index = -1
     for index, work_item in enumerate(sorted(filtered_workitems, key=priority_to_val, reverse=True)):
         WI = {
             "fallback": "Here are the work items for %s %s!" % (args.first_name, args.last_name),
@@ -210,7 +210,7 @@ def send_workitems_to_slack(args, work_items):
         if index >= int(args.n) - 1 and not args.all:
             break
 
-    if index == 0:
+    if index == -1:
         return post_to_slack("No work items were found matching your query.")
 
     slack_text = "Showing %d out of %d work items for *%s %s*!" % \
