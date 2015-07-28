@@ -67,6 +67,7 @@ def filter_resolved(work_items):
             result.append(work_item)
     return result
 
+
 def filter_type(type, work_items):
     """
     Filter for work items that match type
@@ -80,6 +81,7 @@ def filter_type(type, work_items):
         if work_item.type.upper() == type.upper():
             result.append(work_item)
     return result
+
 
 def filter_state(state, work_items):
     """
@@ -95,6 +97,7 @@ def filter_state(state, work_items):
             result.append(work_item)
     return result
 
+
 def filter_priority(priority, work_items):
     """
     Filter for work items that match priority
@@ -108,6 +111,7 @@ def filter_priority(priority, work_items):
         if work_item.priority.upper() == priority.upper():
             result.append(work_item)
     return result
+
 
 def filter_work_items(args, work_items):
     """
@@ -126,6 +130,7 @@ def filter_work_items(args, work_items):
         filtered_workitems = filter_priority(args.priority, filtered_workitems)
     return filtered_workitems
 
+
 def priority_to_val(work_item):
     """
     Convert a work items priority to an integer value for sorting purposes
@@ -138,6 +143,7 @@ def priority_to_val(work_item):
                   "Low": 1,
                   "Unassigned": 0}
     return conversion[work_item.priority]
+
 
 def get_color_code(state):
     """
@@ -153,6 +159,7 @@ def get_color_code(state):
     if state in color_chart:
         return color_chart[state]
     return None
+
 
 def post_to_slack(text, attachments=[]):
     """
@@ -187,6 +194,7 @@ def send_workitems_to_slack(args, work_items):
     # Filter our work item list
     filtered_workitems = filter_work_items(args, work_items)
 
+    index = -1
     for index, work_item in enumerate(sorted(filtered_workitems, key=priority_to_val, reverse=True)):
         WI = {
             "fallback": "Here are the work items for %s %s!" % (args.first_name, args.last_name),
@@ -201,6 +209,9 @@ def send_workitems_to_slack(args, work_items):
         slack_attachments.append(WI)
         if index >= int(args.n) - 1 and not args.all:
             break
+
+    if index == -1:
+        return post_to_slack("No work items were found matching your query.")
 
     slack_text = "Showing %d out of %d work items for *%s %s*!" % \
                  (index + 1, len(filtered_workitems), args.first_name,
