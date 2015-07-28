@@ -38,6 +38,12 @@ def get_argument_parser():
     description = "Application that queries Track and Plan dashboards and " \
                   "sends results to slack."
     parser = SlackArgumentParser(description=description, prog='/ids')
+    parser.add_argument("-t", "--type", choices=["task", "defect", "story", "epic"],
+                        help="Filter for a specific type of work item")
+    parser.add_argument("-s", "--state", choices=["new", "in-progress"],
+                        help="Filter for work items in a specific state")
+    parser.add_argument("-p", "--priority", choices=["high", "medium", "low"],
+                        help="Filter for work items with a specific priority")
     parser.add_argument("-n", default=5, type=check_if_positive,
                         help="Number of work items to retrieve. Default is 5.")
     parser.add_argument("-a", "--all", action="store_true",
@@ -47,7 +53,7 @@ def get_argument_parser():
     return parser
 
 
-def remove_resolved(work_items):
+def filter_resolved(work_items):
     """
     Filter out resolved, completed, or invalid work items
 
@@ -61,6 +67,64 @@ def remove_resolved(work_items):
             result.append(work_item)
     return result
 
+def filter_type(type, work_items):
+    """
+    Filter for work items that match type
+
+    :param type: The type of work item to filter for
+    :param work_items: List of work item objects
+    :return: Filtered list of work items
+    """
+    result = []
+    for work_item in work_items:
+        if work_item.type.upper() == type.upper():
+            result.append(work_item)
+    return result
+
+def filter_state(state, work_items):
+    """
+    Filter for work items that match state
+
+    :param state: The type of work item to filter for
+    :param work_items: List of work item objects
+    :return: Filtered list of work items
+    """
+    result = []
+    for work_item in work_items:
+        if work_item.state.replace(" ", "-").upper() == state.upper():
+            result.append(work_item)
+    return result
+
+def filter_priority(priority, work_items):
+    """
+    Filter for work items that match priority
+
+    :param priority: The type of work item to filter for
+    :param work_items: List of work item objects
+    :return: Filtered list of work items
+    """
+    result = []
+    for work_item in work_items:
+        if work_item.priority.upper() == priority.upper():
+            result.append(work_item)
+    return result
+
+def filter_work_items(args, work_items):
+    """
+    Control method for all filtering methods
+
+    :param args: Command line arguments passed in by the user
+    :param work_items: List of work item objects
+    :return: Filtered list of work items
+    """
+    filtered_workitems = filter_resolved(work_items)
+    if args.type:
+        filtered_workitems = filter_type(args.type, filtered_workitems)
+    if args.state:
+        filtered_workitems = filter_state(args.state, filtered_workitems)
+    if args.priority:
+        filtered_workitems = filter_priority(args.priority, filtered_workitems)
+    return filtered_workitems
 
 def priority_to_val(work_item):
     """
@@ -119,7 +183,10 @@ def send_workitems_to_slack(args, work_items):
     """
     print args
     slack_attachments = []
-    filtered_workitems = remove_resolved(work_items)
+
+    # Filter our work item list
+    filtered_workitems = filter_work_items(args, work_items)
+
     for index, work_item in enumerate(sorted(filtered_workitems, key=priority_to_val, reverse=True)):
         WI = {
             "fallback": "Here are the work items for %s %s!" % (args.first_name, args.last_name),
